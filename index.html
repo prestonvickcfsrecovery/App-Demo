@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<title>Thriver Hub Demo | CFS Recovery</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: app shell (top bar + tab bar + content), member tier switcher in the top bar drives gating; one file, all tabs rendered from data. Palette from cfsrecovery.co "Your Next Step" page. */
+:root{
+  --bg:#0A0E14; --card:#111820; --card2:#131c26; --cyan:#33BBFF; --cyan-dim:rgba(51,187,255,.08); --cyan-glow:rgba(51,187,255,.25);
+  --gold:#E8B84A; --gold-dim:rgba(232,184,74,.10); --good:#4FD08A; --warn:#F2B35D; --crit:#F0655E;
+  --fg:#FFFFFF; --body:rgba(255,255,255,.72); --muted:rgba(255,255,255,.50); --border:rgba(255,255,255,.10); --radius:12px;
+  --font:'Montserrat',system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#0A0E14;--card:#111820;--card2:#131c26;--fg:#fff;--body:rgba(255,255,255,.72);--muted:rgba(255,255,255,.5);--border:rgba(255,255,255,.1);color-scheme:dark}}
+:root[data-theme="light"]{--bg:#0A0E14;--card:#111820;--card2:#131c26;--fg:#fff;--body:rgba(255,255,255,.72);--muted:rgba(255,255,255,.5);--border:rgba(255,255,255,.1);color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);line-height:1.6;-webkit-font-smoothing:antialiased;font-size:14px}
+a{color:var(--cyan);text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* demo banner */
+.demo{background:var(--cyan-dim);border-bottom:1px solid var(--border);padding-block:8px;font-size:12px;color:var(--body);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.demo b{color:var(--cyan);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+.demo .who{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.demo .who span{color:var(--muted)}
+.pill{border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--body);background:var(--card)}
+.pill.on{background:var(--cyan);color:var(--bg);border-color:var(--cyan)}
+.pill.on.plat{background:var(--gold);border-color:var(--gold)}
+.pill.on.staff{background:#fff;border-color:#fff}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(10,14,20,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.top-in{display:flex;align-items:center;gap:14px;padding-block:12px;max-width:1200px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em;white-space:nowrap}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),#1a7fc0);display:grid;place-items:center;color:var(--bg);font-size:12px;font-weight:800}
+.logo small{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--cyan);text-transform:uppercase;line-height:1}
+.search{flex:1;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:40px;padding:8px 16px;color:var(--muted);font-size:13px;display:flex;gap:8px;align-items:center}
+.icons{display:flex;gap:10px;align-items:center}
+.ibtn{position:relative;width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--body)}
+.ibtn .n{position:absolute;top:-4px;right:-4px;background:var(--crit);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:0 5px;line-height:16px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2a3b4d,#51708a);display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}
+.tabs{display:flex;gap:4px;overflow-x:auto;max-width:1200px;margin:0 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;font-size:14px}
+.tab.on{color:var(--fg);border-color:var(--cyan)}
+.tab .lock{font-size:11px;color:var(--gold);margin-left:4px}
+
+/* layout */
+.page{max-width:1200px;margin:0 auto;padding-block:24px 48px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px}
+@media (max-width:900px){.page{grid-template-columns:1fr}.side{order:2}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)}
+.eyebrow.gold{color:var(--gold)}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+h2{font-size:20px;font-weight:800}
+h3{font-size:16px;font-weight:700}
+.muted{color:var(--muted)}
+.body{color:var(--body)}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--cyan);color:var(--bg);font-weight:700;padding:10px 18px;border-radius:8px;font-size:13px;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(51,187,255,.35)}
+.btn.outline{background:transparent;color:var(--cyan);border:1px solid var(--cyan)}
+.btn.gold{background:var(--gold);color:var(--bg)}
+.btn.ghost{background:var(--card2);color:var(--body);border:1px solid var(--border)}
+.btn.sm{padding:6px 12px;font-size:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);border-radius:40px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--body);background:var(--card)}
+.chip.on{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.tier{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:2px 8px;border:1px solid var(--border);color:var(--muted)}
+.tier.plat{color:var(--gold);border-color:rgba(232,184,74,.4);background:var(--gold-dim)}
+.tier.acad{color:var(--cyan);border-color:rgba(51,187,255,.4);background:var(--cyan-dim)}
+.hidden{display:none!important}
+
+/* community */
+.composer{display:flex;gap:12px;align-items:center;padding:14px 16px}
+.composer .in{flex:1;min-width:0;color:var(--muted);font-size:15px}
+.next{display:flex;gap:10px;align-items:center;justify-content:center;color:var(--body);font-size:13px;padding:8px}
+.next b{color:var(--fg)}
+.post{padding:18px 18px 14px;display:grid;gap:10px}
+.post.pinned{border-color:rgba(232,184,74,.35)}
+.post .head{display:flex;gap:10px;align-items:center}
+.post .head .meta{font-size:12px;color:var(--muted)}
+.post .head .name{font-weight:700}
+.post .pin{margin-left:auto;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
+.post h3{font-size:17px;font-weight:800}
+.post p{color:var(--body);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .foot{display:flex;gap:18px;color:var(--muted);font-size:13px;align-items:center}
+.post .foot .likes{font-weight:600}
+.feed{display:grid;gap:14px}
+.gate{border:1px dashed rgba(232,184,74,.5);border-radius:var(--radius);padding:18px;display:grid;gap:8px;background:var(--gold-dim)}
+.gate h3{color:var(--gold)}
+
+/* side */
+.side{display:grid;gap:16px;align-content:start}
+.brand-tile{aspect-ratio:16/9;max-width:100%;border-radius:10px;background:radial-gradient(circle at 70% 30%,rgba(51,187,255,.25),transparent 60%),linear-gradient(135deg,#0d1b2a,#0a0e14);border:1px solid var(--border);display:grid;place-items:center;text-align:center;padding:12px}
+.brand-tile b{font-size:18px;font-weight:800;letter-spacing:.04em}
+.brand-tile small{display:block;font-size:11px;letter-spacing:.14em;color:var(--cyan)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding-block:12px}
+.stats b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.stats span{font-size:11px;color:var(--muted)}
+.lb{display:grid;gap:10px}
+.lb .row{display:flex;gap:10px;align-items:center;font-size:13px}
+.lb .rank{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--bg);font-weight:800;font-size:11px;display:grid;place-items:center}
+.lb .rank.s{background:#aab4c0}.lb .rank.b{background:#b07d4b}
+.lb .pts{margin-left:auto;color:var(--cyan);font-weight:700;font-variant-numeric:tabular-nums}
+.me-progress{display:grid;gap:8px}
+.bar{height:8px;border-radius:8px;background:var(--card2);overflow:hidden;border:1px solid var(--border)}
+.bar i{display:block;height:100%;background:var(--cyan);border-radius:8px}
+.bar.gold i{background:var(--gold)}
+
+/* classroom */
+.courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.course{overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;position:relative}
+.course:hover{transform:translateY(-2px);border-color:var(--cyan-dim)}
+.course .img{aspect-ratio:16/9;max-width:100%;display:grid;place-items:center;text-align:center;padding:14px;font-weight:800;font-size:18px;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
+.course .img.a{background:radial-gradient(circle at 30% 20%,rgba(51,187,255,.4),transparent 55%),#0e2238}
+.course .img.b{background:radial-gradient(circle at 70% 80%,rgba(51,187,255,.3),transparent 55%),#102a3d}
+.course .img.c{background:radial-gradient(circle at 50% 50%,rgba(232,184,74,.35),transparent 55%),#2a2210}
+.course .img.d{background:linear-gradient(135deg,#1b3850,#0e1d2b)}
+.course .cb{padding:14px 16px 16px;display:grid;gap:8px}
+.course .cb p{font-size:12px;color:var(--muted)}
+.course .lockb{position:absolute;top:10px;left:10px}
+.lesson{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px}
+@media (max-width:800px){.lesson{grid-template-columns:1fr}}
+.toc{padding:14px;display:grid;gap:4px;align-content:start}
+.toc .sec{font-weight:700;font-size:13px;padding:8px 6px 4px;color:var(--fg)}
+.toc .li{padding:8px 10px;border-radius:8px;font-size:13px;color:var(--body);display:flex;gap:8px;align-items:center}
+.toc .li.on{background:rgba(232,184,74,.18);color:var(--fg);font-weight:600}
+.toc .li .dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted)}
+.toc .li .dot.done{background:var(--good);border-color:var(--good)}
+.video{aspect-ratio:16/9;max-width:100%;border-radius:10px;background:radial-gradient(circle at 50% 50%,rgba(51,187,255,.18),transparent 60%),#0b1622;display:grid;place-items:center;position:relative;border:1px solid var(--border)}
+.video .play{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;font-size:22px}
+.video .dur{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
+.lesson-body{padding:20px;display:grid;gap:14px}
+.lesson-body p{color:var(--body);max-width:68ch}
+.comment{display:flex;gap:10px;padding:12px;background:var(--card2);border-radius:10px;border:1px solid var(--border);font-size:13px}
+.comment .av{width:28px;height:28px;border-radius:50%;background:#3a5a78;flex-shrink:0;display:grid;place-items:center;font-size:10px;font-weight:700}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--border)}
+.cal-head h2{font-size:18px}
+.cal-head .tz{font-size:12px;color:var(--muted)}
+.cal-head .views{margin-left:auto;display:flex;gap:6px}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--border)}
+.grid7 .dh{padding:8px 6px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center}
+.day{min-height:92px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;display:grid;align-content:start;gap:3px;font-size:11px}
+.day .n{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.day .n.today{background:var(--crit);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center}
+.day .ev{color:var(--cyan);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.day .ev.plat{color:var(--gold)}
+.day .ev.off{color:var(--muted);text-decoration:line-through;opacity:.6}
+@media (max-width:700px){.grid7 .dh:nth-child(n+6),.day:nth-child(7n+6),.day:nth-child(7n+7){display:none}.grid7{grid-template-columns:repeat(5,1fr)}}
+.evlist{display:grid;gap:12px}
+.ev-card{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;padding:14px;align-items:center}
+@media (max-width:520px){.ev-card{grid-template-columns:1fr}}
+.ev-card .thumb{aspect-ratio:16/9;max-width:100%;border-radius:8px;background:linear-gradient(135deg,#1b3850,#0e1d2b);display:grid;place-items:center;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;text-align:center;padding:6px;color:var(--cyan)}
+.ev-card .thumb.plat{background:linear-gradient(135deg,#3a2f12,#1c170a);color:var(--gold)}
+.ev-card h3{font-size:15px}
+.ev-card .when{font-size:12px;color:var(--muted)}
+.ev-card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.att{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--good);font-weight:600}
+
+/* chat */
+.chat{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:560px;overflow:hidden}
+@media (max-width:800px){.chat{grid-template-columns:1fr}.chat .list{display:none}.chat .list.show{display:block}}
+.chat .list{border-right:1px solid var(--border);display:grid;align-content:start}
+.chat .list .h{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.chat .list .h h3{font-size:14px}
+.chat .grp{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:12px 16px 4px}
+.thread{display:flex;gap:10px;padding:10px 16px;align-items:center;cursor:pointer;font-size:13px}
+.thread.on{background:var(--card2)}
+.thread .nm{font-weight:600}
+.thread .last{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.thread .unread{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--cyan)}
+.thread .sla{margin-left:auto;font-size:10px;color:var(--warn);font-weight:700}
+.conv{display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);min-height:560px;min-width:0}
+.conv .h{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.conv .h > div:nth-child(2){flex:1 1 220px;min-width:0}
+.conv .h .nm{font-weight:700}
+.conv .h .st{font-size:11px;color:var(--muted);white-space:normal;display:block;width:100%}
+.conv .h .who-h{flex:1 1 300px;min-width:200px}
+.conv .h .avatar{flex:0 0 34px}
+.conv .h .ctx{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.ctxp{font-size:10px;font-weight:700;border-radius:6px;padding:3px 8px;background:var(--card2);border:1px solid var(--border);color:var(--body)}
+.msgs{padding:16px;display:grid;gap:12px;align-content:start;overflow:auto}
+.msg{display:grid;gap:4px;max-width:78%}
+.msg .b{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--fg)}
+.msg.me{justify-self:end}
+.msg.me .b{background:rgba(51,187,255,.12);border-color:rgba(51,187,255,.3)}
+.msg .t{font-size:10px;color:var(--muted)}
+.msg .b .link{display:block;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--card);border:1px solid var(--border);font-size:12px}
+.msg .b .link b{display:block;color:var(--cyan)}
+.daysep{text-align:center;font-size:11px;color:var(--muted)}
+.compose{display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--border);align-items:center}
+.compose .in{flex:1;min-width:0;background:var(--card2);border:1px solid var(--border);border-radius:40px;padding:10px 16px;color:var(--fg);font-family:inherit;font-size:13px}
+
+/* admin */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{padding:14px 16px}
+.kpi b{display:block;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{font-size:11px;color:var(--muted)}
+.kpi .d{font-size:11px;color:var(--good);font-weight:600}
+.kpi .d.down{color:var(--crit)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-weight:700}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.tbl{overflow-x:auto}
+.st{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.st.g{background:var(--good)}.st.w{background:var(--warn)}.st.c{background:var(--crit)}
+.spark{height:56px;width:100%}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.adm-nav{display:flex;gap:6px;flex-wrap:wrap}
+.member{display:grid;gap:14px;padding:18px}
+.member .hd{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.member .hd .av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#8a5a3a,#c58a5a);display:grid;place-items:center;font-weight:800}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kv div{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.kv span{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kv b{font-size:13px;font-weight:600}
+.timeline{display:grid;gap:8px;font-size:12px}
+.timeline div{display:flex;gap:10px}
+.timeline .t{color:var(--muted);width:92px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--cyan);color:var(--fg);padding:10px 16px;border-radius:40px;font-size:13px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.notice{font-size:12px;color:var(--muted);padding-block:6px}
+/* profile + settings + billing */
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.folder{padding:16px;display:grid;gap:8px;cursor:pointer;transition:border-color .2s,transform .2s}
+.folder:hover{border-color:var(--cyan-dim);transform:translateY(-2px)}
+.folder .ic{width:40px;height:40px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(232,184,74,.3);display:grid;place-items:center;font-size:18px}
+.folder .cnt{font-size:12px;color:var(--muted)}
+.folder ul{list-style:none;display:grid;gap:4px;font-size:12px;color:var(--body);border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+.folder ul li{display:flex;justify-content:space-between;gap:8px}
+.folder ul li span{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.quote{padding:22px 24px;border-color:rgba(232,184,74,.35);background:radial-gradient(circle at 100% 0%,rgba(232,184,74,.12),transparent 55%),var(--card);display:grid;gap:8px}
+.quote blockquote{font-size:17px;font-weight:600;line-height:1.5;max-width:60ch}
+.quote cite{font-style:normal;font-size:12px;color:var(--muted)}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.plan div{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px}
+.plan span{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.plan b{font-size:15px;font-weight:700}
+.settings{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px}
+@media (max-width:800px){.settings{grid-template-columns:1fr}}
+.snav{display:grid;gap:2px;align-content:start;padding:8px}
+.snav button{text-align:left;padding:9px 12px;border-radius:8px;font-size:13px;color:var(--body);font-weight:500}
+.snav button.on{background:var(--cyan-dim);color:var(--cyan);font-weight:600}
+.srow{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.srow:last-child{border-bottom:0}
+.srow .l b{display:block;font-size:13px;font-weight:600}
+.srow .l span{font-size:12px;color:var(--muted)}
+.toggle{width:42px;height:24px;border-radius:24px;background:var(--card2);border:1px solid var(--border);position:relative;flex-shrink:0;transition:background .2s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+.toggle.on{background:var(--good);border-color:var(--good)}
+.toggle.on::after{transform:translateX(18px);background:#fff}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tcard{padding:16px;display:grid;gap:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card2)}
+.tcard .nm{font-weight:800;font-size:15px}
+.tcard .pr{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.tcard .pr small{font-size:12px;color:var(--muted);font-weight:500}
+.tcard .trial{display:flex;align-items:center;gap:8px;font-size:12px;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border)}
+.tcard .trial select{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-family:inherit;font-size:12px}
+.tcard.plat{border-color:rgba(232,184,74,.4)}
+.inv{font-size:12px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--body);overflow-x:auto;white-space:pre}
+.section-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.section-h .r{margin-left:auto;display:flex;gap:8px}
+
+body.is-caregiver #calendar .notice{display:none}
+
+/* ── Feedback mode ── */
+#fbBtn.on{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+body.fb-mode .fb-target{outline:1.5px dashed rgba(232,184,74,.55);outline-offset:3px;cursor:crosshair!important;transition:outline-color .15s}
+body.fb-mode .fb-target:hover{outline:2px solid var(--gold);background-color:rgba(232,184,74,.06)}
+.fb-pin{position:absolute;z-index:45;width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--bg);font-size:11px;font-weight:800;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;border:2px solid var(--bg)}
+.fb-pin.love{background:var(--good)}.fb-pin.change{background:var(--gold)}.fb-pin.q{background:var(--cyan)}
+.fb-pop{position:fixed;z-index:60;width:min(340px,calc(100vw - 32px));background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:14px;box-shadow:0 16px 50px rgba(0,0,0,.6);display:grid;gap:10px}
+.fb-pop .what{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.fb-pop .what b{color:var(--gold);display:block;font-size:13px;letter-spacing:0;text-transform:none;margin-top:2px}
+.fb-kinds{display:flex;gap:6px}
+.fb-kinds button{flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--body);background:var(--card2)}
+.fb-kinds button.on.love{border-color:var(--good);color:var(--good);background:rgba(79,208,138,.12)}
+.fb-kinds button.on.change{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.fb-kinds button.on.q{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.fb-pop textarea,.fb-pop input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;color:var(--fg);font-family:inherit;font-size:13px;resize:vertical}
+.fb-pop textarea{min-height:70px}
+.fb-pop .row{display:flex;gap:8px;justify-content:flex-end}
+.fb-thread{display:grid;gap:8px;max-height:200px;overflow:auto;padding-right:4px}
+.fb-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:4px}
+.fb-item .meta{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fb-item .k{font-size:10px;font-weight:700;padding:1px 7px;border-radius:40px;border:1px solid}
+.fb-item .k.love{color:var(--good);border-color:var(--good)}.fb-item .k.change{color:var(--gold);border-color:var(--gold)}.fb-item .k.q{color:var(--cyan);border-color:var(--cyan)}
+.fb-item .del{margin-left:auto;color:var(--muted);font-size:11px}
+.fb-item .del:hover{color:var(--crit)}
+#fbPanel .fb-item{cursor:pointer}
+.fb-group{display:grid;gap:8px}
+.fb-group h3{font-size:14px;display:flex;gap:8px;align-items:center}
+.fb-group h3 .n{font-size:11px;color:var(--muted);font-weight:500}
+.fb-empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+.fb-hint{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:var(--bg);font-size:12px;font-weight:700;padding:8px 14px;border-radius:40px;z-index:44;box-shadow:0 6px 24px rgba(0,0,0,.5);display:none;white-space:nowrap}
+body.fb-mode .fb-hint{display:block}
+.is-app .fb-pop{left:16px!important;right:16px;width:auto;bottom:calc(80px + env(safe-area-inset-bottom,0px));top:auto!important}
+/* scene bar under the map */
+.scene-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border)}
+.scene-bar .demo-only button{font-size:11px;color:var(--body);padding:2px 8px;border-radius:40px;border:1px solid var(--border);margin-left:4px}
+.scene-bar .demo-only button:hover{border-color:var(--cyan);color:var(--cyan)}
+/* ── App mode (phone width, or forced with .app-mode for the desktop "Phone" toggle) ── */
+.phone-toggle{margin-left:8px}
+.app-frame{display:none}
+.bottombar{display:none}
+@media (max-width:720px){ html:not(.desk-force) body{--app:1} }
+body.app-mode{--app:1}
+/* everything below applies when --app is set: use a wrapper class set by JS */
+.is-app .demo .who span{display:none}
+.is-app .demo{padding-block:6px;gap:6px}
+.is-app .demo > span:not(.who){display:none}
+.is-app .demo .who{margin-left:0}
+.is-app .pill{padding:3px 10px;font-size:11px}
+.is-app .top-in{gap:10px;padding-block:10px}
+.is-app .logo div:not(.mark){display:none}
+.is-app .search{padding:7px 12px;font-size:12px}
+.is-app .search span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.is-app .tabs{display:none}
+.is-app .page{grid-template-columns:1fr!important;padding-block:14px 92px;gap:14px}
+.is-app .side{order:2}
+.is-app .side .brand-tile,.is-app .side .stats{display:none}
+.is-app .composer .in{font-size:14px}
+.is-app .post{padding:14px}
+.is-app .post p{-webkit-line-clamp:3}
+.is-app .courses{grid-template-columns:1fr 1fr;gap:10px}
+.is-app .course .img{font-size:13px}
+.is-app .course .cb{padding:10px 12px 12px}
+.is-app .course .cb p{display:none}
+.is-app .lesson{grid-template-columns:1fr}
+.is-app .toc{order:2}
+.is-app .lesson-body{padding:14px}
+.is-app #calendar .card:first-child .grid7,.is-app #calendar .card:first-child .notice,.is-app .cal-head .views{display:none}
+.is-app #calendar .card:first-child{border:0;background:none}
+.is-app .cal-head{padding:0 0 8px;border:0;flex-wrap:nowrap}
+.is-app .cal-head h2{font-size:17px}
+.is-app .cal-head .tz{display:none}
+.is-app .ev-card{grid-template-columns:88px minmax(0,1fr);padding:12px}
+.is-app .ev-card .thumb{font-size:9px}
+.is-app .evlist{gap:10px}
+.is-app .chat{grid-template-columns:1fr;min-height:0}
+.is-app .chat .list{display:grid;border-right:0}
+.is-app .chat .list.hide{display:none}
+.is-app .conv{display:none;min-height:70vh}
+.is-app .conv.show{display:grid}
+.is-app .conv .h{padding:10px 12px;flex-wrap:nowrap;align-items:flex-start}
+.is-app .conv .h .nm{font-size:13px;line-height:1.3}
+.is-app .conv .h .avatar{flex:0 0 34px}
+.is-app .conv .h .who-h{flex:1 1 0;min-width:0}
+.is-app .conv .h .st{display:block;font-size:10.5px;line-height:1.35}
+.is-app .conv .h .ctx{display:none}
+.is-app .back{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--border);font-size:14px;flex-shrink:0}
+.back{display:none}
+.is-app .msg{max-width:88%}
+.is-app .kpis{grid-template-columns:1fr 1fr}
+.is-app .kpi b{font-size:20px}
+.is-app .folders{grid-template-columns:1fr}
+.is-app .quote{padding:16px}
+.is-app .quote blockquote{font-size:15px}
+.is-app .plan{grid-template-columns:1fr 1fr}
+.is-app .settings{grid-template-columns:1fr}
+.is-app .snav{display:flex;overflow-x:auto;gap:6px;padding:6px;scrollbar-width:none}
+.is-app .snav button{white-space:nowrap;border:1px solid var(--border);border-radius:40px;padding:7px 12px;font-size:12px}
+.is-app .tiers{grid-template-columns:1fr}
+.is-app .admin-grid{grid-template-columns:1fr}
+.is-app .section-h .r{width:100%;margin-left:0}
+.is-app .adm-nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:4px}
+.is-app .adm-nav .chip{white-space:nowrap}
+.is-app .bottombar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(10,14,20,.94);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));justify-content:space-around}
+.bottombar button{display:grid;justify-items:center;gap:2px;font-size:9.5px;font-weight:600;color:var(--muted);padding:4px 2px;min-width:44px;border-radius:10px}
+.bottombar button .ic{font-size:20px;line-height:1}
+.bottombar button.on{color:var(--cyan)}
+.bottombar button.on.plat{color:var(--gold)}
+.bottombar button.more{position:relative}
+.sheet{display:none;position:fixed;inset:auto 0 0 0;z-index:40;background:var(--card);border-radius:16px 16px 0 0;border:1px solid var(--border);padding:14px max(16px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.6)}
+.sheet.show{display:grid;gap:4px}
+.sheet .grab{width:40px;height:4px;border-radius:4px;background:var(--border);margin:0 auto 10px}
+.sheet button{text-align:left;padding:12px 10px;border-radius:10px;font-size:14px;font-weight:600;display:flex;gap:12px;align-items:center}
+.sheet button:hover{background:var(--card2)}
+.sheet .sub{font-size:11px;color:var(--muted);font-weight:500;margin-left:auto}
+.scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}
+.scrim.show{display:block}
+/* desktop phone preview frame */
+.phone-shell{max-width:430px;margin:0 auto;border:1px solid var(--border);border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative;background:var(--bg)}
+.phone-shell .bottombar{position:absolute}
+.phone-shell .sheet,.phone-shell .scrim{position:absolute}
+.phone-note{text-align:center;font-size:12px;color:var(--muted);padding-block:10px 0}
+
+/* ── Recovery Path (home for Academy / School / Platinum) ── */
+.path-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:18px 20px;background:radial-gradient(circle at 90% 10%,rgba(51,187,255,.18),transparent 55%),var(--card)}
+.path-hero h2{font-size:22px}
+.path-hero .sub{color:var(--body);font-size:13px}
+.path-hero .daybig{text-align:center;padding:10px 16px;border:1px solid rgba(51,187,255,.35);border-radius:12px;background:var(--cyan-dim);min-width:96px}
+.path-hero .daybig b{display:block;font-size:28px;font-weight:800;line-height:1;color:var(--cyan);font-variant-numeric:tabular-nums}
+.path-hero .daybig span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.checkin{display:grid;gap:10px;padding:16px}
+.checkin .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.checkin .lbl{font-size:12px;color:var(--muted);min-width:72px}
+.feel{display:flex;gap:6px}
+.feel button{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--card2);font-size:18px;display:grid;place-items:center}
+.feel button.on{border-color:var(--cyan);background:var(--cyan-dim);box-shadow:0 0 0 3px rgba(51,187,255,.15)}
+.checkin input[type=text]{flex:1;min-width:140px;background:var(--card2);border:1px solid var(--border);border-radius:40px;padding:9px 14px;color:var(--fg);font-family:inherit;font-size:13px}
+.streak{font-size:12px;color:var(--good);font-weight:600}
+.gauge{display:grid;gap:6px;padding:16px}
+.gauge .track{height:14px;border-radius:14px;background:linear-gradient(90deg,var(--good) 0 45%,var(--warn) 45% 72%,var(--crit) 72%);opacity:.85;position:relative}
+.gauge .mark{position:absolute;top:-6px;width:4px;height:26px;border-radius:4px;background:#fff;box-shadow:0 0 0 2px var(--bg)}
+.gauge .lbls{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.path-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+@media (max-width:900px){.path-grid{grid-template-columns:1fr}}
+.map{padding:0;overflow:hidden;position:relative}
+.map svg{display:block;width:100%;height:auto}
+.stop-card{display:grid;gap:10px;padding:16px;border-color:rgba(51,187,255,.35)}
+.stop-card .kind{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:40px}
+.k-learn{background:rgba(138,92,214,.18);color:#C9ADFF}.k-call{background:var(--cyan-dim);color:var(--cyan)}.k-aid{background:rgba(240,101,94,.15);color:#FF9A94}.k-hazard{background:rgba(242,179,93,.15);color:var(--warn)}.k-milestone{background:var(--gold-dim);color:var(--gold)}.k-start,.k-finish{background:rgba(79,208,138,.15);color:var(--good)}
+.stop-card ul{list-style:none;display:grid;gap:6px;font-size:13px}
+.stop-card li{display:flex;gap:8px;align-items:flex-start}
+.stop-card li .cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--muted);flex-shrink:0;margin-top:2px;display:grid;place-items:center;font-size:10px}
+.stop-card li.done .cb{background:var(--good);border-color:var(--good);color:var(--bg)}
+.stop-card li.done{color:var(--muted);text-decoration:line-through}
+.stops-list{display:grid;gap:2px;max-height:300px;overflow:auto;padding:8px}
+.stops-list button{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;text-align:left;font-size:13px;color:var(--body)}
+.stops-list button.on{background:var(--cyan-dim);color:var(--fg)}
+.stops-list button.done{color:var(--muted)}
+.stops-list .d{width:44px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;flex-shrink:0}
+.stops-list .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.arcade{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.game{padding:12px;display:grid;gap:4px;cursor:pointer;transition:transform .2s,border-color .2s}
+.game:hover{transform:translateY(-2px);border-color:var(--cyan-dim)}
+.game .ic{font-size:22px}
+.game b{font-size:13px}
+.game span{font-size:11px;color:var(--muted)}
+.game.played{border-color:rgba(79,208,138,.4)}
+.game.played .ic::after{content:" ✓";color:var(--good);font-size:12px}
+.lowenergy{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--body)}
+body.low-energy .feed,body.low-energy #catChips,body.low-energy #spaceChips,body.low-energy .composer,body.low-energy .arcade-wrap,body.low-energy .stops-list,body.low-energy .checkin,body.low-energy .gauge{display:none!important}
+body.low-energy .path-hero{background:var(--card)}
+.is-app .path-hero{padding:14px 16px}
+.is-app .path-hero h2{font-size:18px}
+.is-app .arcade{grid-template-columns:1fr 1fr}
+.is-app .stops-list{max-height:220px}
+</style>
+</head>
+<body>
+
+<div class="demo wrap">
+  <b>Demo</b><span>Thriver Hub, the proposed single platform. Switch who you are viewing as:</span>
+  <div class="who" id="who">
+    <span>View as</span>
+    <button class="pill" data-role="foundations">Foundations</button>
+    <button class="pill" data-role="school">School</button>
+    <button class="pill on" data-role="academy">Academy</button>
+    <button class="pill" data-role="continuity">Continuity</button>
+    <button class="pill" data-role="beyond">Beyond Recovery</button>
+    <button class="pill plat" data-role="platinum">Platinum</button>
+    <button class="pill" data-role="caregiver">Caregiver</button>
+    <button class="pill staff" data-role="staff">Staff</button>
+    <span class="phone-toggle">·</span><button class="pill" id="phoneBtn" onclick="togglePhone()">📱 Phone view</button><button class="pill" id="fbBtn" onclick="toggleFb()">💬 Feedback</button><button class="pill" id="fbListBtn" onclick="setTab('feedback')">📋 Notes <span id="fbCount" style="opacity:.7">0</span></button>
+  </div>
+</div>
+
+<div id="appRoot">
+<header class="top wrap">
+  <div class="top-in">
+    <div class="logo"><div class="mark">CFS</div><div>CFS Recovery<small>Thriver Hub</small></div></div>
+    <div class="search">⌕ <span>Search posts, lessons, calls</span></div>
+    <div class="icons">
+      <div class="ibtn" title="Messages">✉<span class="n" id="msgN">2</span></div>
+      <div class="ibtn" title="Notifications">🔔<span class="n">9</span></div>
+      <div class="avatar" id="meAv">LE</div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-tab="path" id="tabPath">Recovery Path</button>
+    <button class="tab" data-tab="community">Community</button>
+    <button class="tab" data-tab="classroom">Classroom</button>
+    <button class="tab" data-tab="calendar">Calendar</button>
+    <button class="tab" data-tab="chat" id="tabChat">My Coach<span class="lock">◆</span></button>
+    <button class="tab" data-tab="progress" id="tabProg">My Progress</button>
+    <button class="tab" data-tab="training" id="tabTrain">Internal Training</button>
+    <button class="tab" data-tab="settings">Account Settings</button>
+    <button class="tab" data-tab="admin" id="tabAdmin">Admin</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+<!-- RECOVERY PATH (home) -->
+<section class="page" id="path" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:14px;min-width:0">
+    <div class="card path-hero"><div><div class="eyebrow">Your road to recovery · Month 1 · Foundations</div><h2>Today's stop: <span style="color:var(--cyan)">Roadside Assistance</span></h2><div class="sub">Day 10 of 90. Three stops done this week. Tonight's call is Academy Call B at 5pm, and you're 2 of 3 on this week's calls.</div></div><div class="daybig"><b>10</b><span>Day of 90</span></div></div>
+    <div class="lowenergy"><span>🌙 <b>Low-energy mode</b> hides the feed and games and shows only today's stop.</span><div class="toggle" onclick="this.classList.toggle('on');document.body.classList.toggle('low-energy',this.classList.contains('on'))"></div></div>
+    <div class="card checkin">
+      <div class="section-h"><div><div class="eyebrow">Monthly check-in</div><h3>Your November Nervous System Health Assessment opens Nov 1</h3></div><span class="streak" style="margin-left:auto">October: done ✓</span></div>
+      <p class="body" style="font-size:13px;max-width:70ch">Once a month, not daily. Recovery is not about watching symptoms; it is about noticing, over time, that your nervous system is calmer. A coach reads your assessment alongside your Recovery Analysis and shapes next month's pacing plan with you.</p>
+      <div class="row"><button class="btn sm ghost" onclick="toast('Opens your coach\'s notes from October')">Coach notes · October</button><button class="btn sm ghost" onclick="toast('Opens Monthly Recovery Analysis form')">Submit Recovery Analysis</button><span class="muted" style="font-size:12px;margin-left:auto">We'll remind you on Nov 1 · about 5 minutes</span></div>
+    </div>
+    <div class="path-grid">
+      <div style="display:grid;gap:14px;min-width:0">
+        <div class="card map"><svg viewBox="0 0 640 1000" role="img" aria-label="Road map of your first 30 days" id="roadmap"></svg><div class="scene-bar"><span id="sceneLbl"></span><span class="demo-only">Demo: <button onclick="setScene(null)">Live</button><button onclick="setScene('dawn')">Sunrise</button><button onclick="setScene('day')">Day</button><button onclick="setScene('dusk')">Sunset</button><button onclick="setScene('night')">Night</button></span></div></div>
+        <div class="card gauge"><div class="section-h"><h3>Capacity gauge</h3><span class="muted" style="font-size:11px;margin-left:auto">from your monthly assessment and pacing plan</span></div><div class="track"><div class="mark" style="left:38%"></div></div><div class="lbls"><span>Optimal zone</span><span>Stretch</span><span>Over threshold</span></div><p class="body" style="font-size:12px">Your current pacing plan sits in the optimal zone. This week's gentle expansion: one extra 10-minute walk, then hold. Uncomfortable is expected; unmanageable means pull back. Adjusted with your coach each month.</p></div>
+        <div class="arcade-wrap" style="display:grid;gap:10px"><div class="section-h"><div><div class="eyebrow">Rest Stop Arcade</div><h3>Games you've unlocked on the road</h3></div><span class="muted" style="font-size:11px;margin-left:auto">Each game lives at its stop · 4 of 11 unlocked</span></div>
+          <div class="arcade">
+            <div class="card game played" onclick="toast('Opens Stress Threshold Stack-Up')"><div class="ic">🥛</div><b>Stress Threshold Stack-Up</b><span>Unlocked at Day 2</span></div>
+            <div class="card game played" onclick="toast('Opens The Pendulum')"><div class="ic">🪀</div><b>The Pendulum</b><span>Unlocked at Day 4</span></div>
+            <div class="card game played" onclick="toast('Opens Responding Well')"><div class="ic">🧭</div><b>Responding Well</b><span>Unlocked at Day 6</span></div>
+            <div class="card game" style="border-style:dashed" onclick="setStop(8);toast('Play it from today\'s stop')"><div class="ic">🚶</div><b>The Optimal Zone</b><span>Today · tap the stop to play</span></div>
+          </div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card stop-card" id="stopCard"></div>
+        <div class="card stops-list" id="stopsList"></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="page hidden" id="community">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="card composer"><div class="avatar" id="meAv2">LE</div><div class="in">Share a win, ask a question, check in…</div><button class="btn sm">Post</button></div>
+    <div class="next" id="nextCall">📅 <b>Academy Call - B</b> starts in 3 hours · <a href="#" onclick="return toast('Your personal Zoom link opened; attendance is recorded automatically.')">Join</a></div>
+    <div class="chips" id="spaceChips"></div>
+    <div class="chips" id="catChips">
+      <span class="chip on">All</span><span class="chip">Announcements</span><span class="chip">Wins / Celebrations</span><span class="chip">Questions</span><span class="chip">New Thrivers</span><span class="chip">Call Replays</span><span class="chip">Golden Nuggets</span><span class="chip">Thriver Check-In</span>
+    </div>
+    <div class="feed" id="feed"></div>
+  </div>
+  <aside class="side">
+    <div class="card" style="padding:14px;display:grid;gap:12px">
+      <div class="brand-tile"><div><small>CFS RECOVERY</small><b>THRIVER HUB</b></div></div>
+      <div><h3 id="sideTitle">Recovery Academy</h3><p class="body" style="font-size:13px" id="sideDesc">Learn everything you need to know about recovering from ME/CFS and Long Covid using a proven system.</p></div>
+      <div class="stats"><div><b>515</b><span>Members</span></div><div><b>10</b><span>Online</span></div><div><b>17</b><span>Coaches</span></div></div>
+      <div class="me-progress">
+        <div class="eyebrow">Your 30-day roadmap</div>
+        <div class="bar"><i style="width:27%"></i></div>
+        <div class="muted" style="font-size:12px">Day 8 of 30 · 2 lessons left this week</div>
+      </div>
+    </div>
+    <div class="card" style="padding:14px;display:grid;gap:12px">
+      <div class="section-h"><h3>Leaderboard</h3><span class="muted" style="font-size:11px;margin-left:auto">30-day</span></div>
+      <div class="lb">
+        <div class="row"><span class="rank">1</span><span class="avatar" style="width:26px;height:26px;font-size:9px">VC</span>Vilma Resa C. <span class="pts">+224</span></div>
+        <div class="row"><span class="rank s">2</span><span class="avatar" style="width:26px;height:26px;font-size:9px">MB</span>Magdalena B. <span class="pts">+178</span></div>
+        <div class="row"><span class="rank b">3</span><span class="avatar" style="width:26px;height:26px;font-size:9px">DF</span>David Friz <span class="pts">+166</span></div>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<!-- CLASSROOM -->
+<section class="page hidden" id="classroom" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="section-h"><div><div class="eyebrow" id="clsEyebrow">Classroom</div><h2 id="clsTitle">Your courses</h2></div><div class="r"><button class="btn ghost sm" onclick="showLesson(false)">All courses</button></div></div>
+    <div class="courses" id="courses"></div>
+    <div class="lesson hidden" id="lessonView">
+      <div class="card toc">
+        <div style="padding:6px"><h3 style="font-size:14px">Academy Start Here · 30-Day Roadmap</h3><div class="bar" style="margin-top:8px"><i style="width:27%"></i></div><div class="muted" style="font-size:11px;margin-top:4px">27% complete</div></div>
+        <div class="sec">Before You Get Started</div>
+        <div class="li"><span class="dot done"></span>Your 1-on-1 Welcome Call</div>
+        <div class="li"><span class="dot done"></span>Service Agreement</div>
+        <div class="sec">Day 1: Welcome to Recovery Academy</div>
+        <div class="li on"><span class="dot done"></span>1.1 Welcome to Recovery Academy!</div>
+        <div class="li"><span class="dot"></span>Onboarding Group Call</div>
+        <div class="li"><span class="dot"></span>1.2 Meet Our Coaches</div>
+        <div class="li"><span class="dot"></span>1.3 Introduction to the Hub</div>
+        <div class="li"><span class="dot"></span>1.4 Community Guidelines</div>
+        <div class="li"><span class="dot"></span>1.5 Group Call Guidelines</div>
+        <div class="sec">Week 1 · unlocks Day 3</div>
+        <div class="li muted"><span class="dot"></span>Week 1 | Recovery Principles</div>
+      </div>
+      <div class="card lesson-body">
+        <div class="section-h"><h2>1.1 Welcome to Recovery Academy!</h2><div class="r"><button class="btn sm outline" onclick="toast('Marked complete · roadmap 30%')">Mark complete ✓</button></div></div>
+        <div class="video"><div class="play">▶</div><div class="dur">3:22</div></div>
+        <p>Welcome to the Recovery Academy. You are no longer doing this alone. You now have a proven system, a supportive team, and a community behind you. This journey is structured to help you move forward step by step, with short video modules, progress tracking, and an onboarding call to launch you into action.</p>
+        <p>Stay consistent, trust the process, and remember that real, lasting recovery is not just possible, it is expected.</p>
+        <div class="eyebrow">Attachments</div>
+        <div class="chips"><span class="chip">📄 Week 1 worksheet.pdf</span><span class="chip">📄 Nervous System Assessment</span></div>
+        <div class="eyebrow">Discussion · 16</div>
+        <div class="comment"><div class="av">NH</div><div><b>Navina Heise</b> <span class="muted">· 2h</span><br>Just watched this on day one. The "expected" line got me. Thank you Miguel.</div></div>
+        <div class="comment"><div class="av" style="background:#2a6a8a">CV</div><div><b>Coach Chelsea</b> <span class="tier acad">Coach</span><br>Welcome Navina! Your onboarding group call is Wednesday 10am PT, it's already on your calendar.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALENDAR -->
+<section class="page hidden" id="calendar" style="grid-template-columns:minmax(0,1fr) 340px">
+  <div class="card" style="min-width:0">
+    <div class="cal-head"><button class="btn ghost sm">Today</button><h2>October 2026</h2><span class="tz">2:12pm Los Angeles · shown in your time zone</span><div class="views"><button class="btn ghost sm">List</button><button class="btn sm">Month</button></div></div>
+    <div class="grid7" id="calGrid"></div>
+    <div class="notice wrap">Only calls your membership includes are shown. Gold = Platinum. Tap a call for the Zoom link, replay and your attendance.</div>
+  </div>
+  <aside class="side">
+    <div class="eyebrow">Next up</div>
+    <div class="evlist" id="evlist"></div>
+  </aside>
+</section>
+
+<!-- CHAT -->
+<section class="page hidden" id="chat" style="grid-template-columns:1fr">
+  <div class="card chat" id="chatBox">
+    <div class="list" id="chatList"></div>
+    <div class="conv" id="conv"></div>
+  </div>
+</section>
+
+<!-- PLATINUM PROFILE -->
+<section class="page hidden" id="profile" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="section-h"><div><div class="eyebrow gold">My profile · Platinum</div><h2 id="profName">Anthony Charro</h2></div><div class="r"><span class="tier plat">Platinum 12 Months</span></div></div>
+    <div class="card quote"><div class="eyebrow gold">Quote of the day</div><blockquote>"Your nervous system is not broken. It is overprotective, and it can learn to feel safe again."</blockquote><cite>Miguel Bautista · Day 27 of your journey</cite></div>
+    <div class="card" style="padding:16px;display:grid;gap:12px">
+      <h3>Your program</h3>
+      <div class="plan">
+        <div><span>Product</span><b>Platinum 12 Months</b></div>
+        <div><span>Start date</span><b>Sep 29, 2026</b></div>
+        <div><span>End date</span><b>Sep 28, 2027</b></div>
+        <div><span>Coach</span><b>Chelsea Verbeek</b></div>
+        <div><span>Cohort</span><b>Platinum A1</b></div>
+        <div><span>Days in</span><b>27 of 365</b></div>
+      </div>
+      <div class="bar gold"><i style="width:7.4%"></i></div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi"><span>Calls attended this month</span><b>6 of 8</b><span class="d">Platinum Q&A + Academy</span></div>
+      <div class="card kpi"><span>Check-in calls</span><b>1 of 1</b><span class="d">next: Nov 17</span></div>
+      <div class="card kpi"><span>Monthly assessment</span><b>Oct ✓</b><span class="d">next opens Nov 1</span></div>
+      <div class="card kpi"><span>Video journals</span><b>3</b><span class="d">next due Fri</span></div>
+    </div>
+    <div class="eyebrow">Your folders</div>
+    <div class="folders">
+      <div class="card folder" onclick="toast('Opens Check-in Call Replays')"><div class="ic">🎥</div><h3>Check-in Call Replays</h3><div class="cnt">1 replay · recorded by your coach</div><ul><li>Platinum Check-In · Oct 20<span>42 min</span></li><li class="muted">Next check-in · Nov 17<span>booked</span></li></ul></div>
+      <div class="card folder" onclick="toast('Opens Nervous System Health Assessments')"><div class="ic">📈</div><h3>Nervous System Assessments</h3><div class="cnt">2 completed · monthly</div><ul><li>October 2026<span>done</span></li><li>Intake · Sep 29<span>done</span></li><li class="muted">November<span>opens Nov 1</span></li></ul></div>
+      <div class="card folder" onclick="toast('Opens Video Journals')"><div class="ic">📹</div><h3>Video Journals</h3><div class="cnt">3 entries · coach reads before each check-in</div><ul><li>Week 3 · screen time and capacity<span>Oct 19</span></li><li>Week 2 · first walk<span>Oct 12</span></li><li>Week 1 · intake<span>Oct 3</span></li></ul><button class="btn gold sm" onclick="event.stopPropagation();toast('Record from your phone or upload a file')">Record new journal</button></div>
+      <div class="card folder" onclick="toast('Opens your Recovery Plan')"><div class="ic">🗺</div><h3>Recovery Plan</h3><div class="cnt">Updated by Chelsea after each check-in</div><ul><li>Plan v2 · Oct 20<span>current</span></li><li>Plan v1 · Sep 29<span></span></li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<section class="page hidden" id="progress" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px">
+    <div><div class="eyebrow">My progress</div><h2 id="progName">Lailah Eloche · Academy</h2></div>
+    <div class="kpis">
+      <div class="card kpi"><span>Roadmap</span><b>Day 8 / 30</b><span class="d">on track</span></div>
+      <div class="card kpi"><span>Calls attended this month</span><b>5 of 8</b><span class="d">62% · above cohort avg</span></div>
+      <div class="card kpi"><span>Lessons complete</span><b>11</b><span class="d">+3 this week</span></div>
+      <div class="card kpi"><span>Check-ins posted</span><b>4</b><span class="d">streak: 4 weeks</span></div>
+      <div class="card kpi"><span>Monthly assessment</span><b>Oct ✓</b><span class="d">next opens Nov 1</span></div>
+    </div>
+    <div class="admin-grid">
+      <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Calls this month</h3><svg class="spark" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Calls attended by week"><rect x="10" y="26" width="50" height="30" fill="#33BBFF" rx="3"/><rect x="80" y="36" width="50" height="20" fill="#33BBFF" rx="3"/><rect x="150" y="16" width="50" height="40" fill="#33BBFF" rx="3"/><rect x="220" y="26" width="50" height="30" fill="rgba(51,187,255,.35)" rx="3"/></svg><div class="muted" style="font-size:11px;display:flex;justify-content:space-between"><span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4 (so far)</span></div></div>
+      <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Recovery Video Journal</h3><p class="body" style="font-size:13px">3 entries. Your next journal is due Friday. Coaches read these before your monthly Recovery Analysis.</p><button class="btn outline sm">Record a journal entry</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERNAL TRAINING (staff) -->
+<section class="page hidden" id="training" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="section-h"><div><div class="eyebrow">Internal Training · staff only</div><h2>Team onboarding and playbooks</h2></div><div class="r"><button class="btn sm outline" onclick="toast('New course: pick a role to gate it')">New course</button></div></div>
+    <p class="body" style="font-size:13px;max-width:70ch">Members never see this tab. Each course is gated by staff role, and completion shows on the team member's record so ops can see who has finished onboarding.</p>
+    <div class="courses">
+      <div class="card course" onclick="toast('Opens Thriver Coach Onboarding')"><div class="img d" style="background:radial-gradient(circle at 30% 30%,rgba(79,208,138,.35),transparent 55%),#102a1c">THRIVER COACH<br>ONBOARDING</div><div class="cb"><h3>Thriver Coach Onboarding</h3><p>Coaching framework, check-in call script, recovery plan template, chat SLA. Required for the Coach role.</p><div class="bar"><i style="width:100%;background:var(--good)"></i></div><p>7 of 7 coaches complete</p></div></div>
+      <div class="card course" onclick="toast('Opens Enrollment Specialist Onboarding')"><div class="img d" style="background:radial-gradient(circle at 70% 30%,rgba(79,208,138,.35),transparent 55%),#102a1c">ENROLLMENT SPECIALIST<br>ONBOARDING</div><div class="cb"><h3>Enrollment Specialist Onboarding</h3><p>Call scorecard, deferred starts, Whop checkout and deposits, handoff to coordination. Required for the Sales role.</p><div class="bar"><i style="width:60%;background:var(--good)"></i></div><p>3 of 5 complete · 2 in progress</p></div></div>
+      <div class="card course" onclick="toast('Opens Client Experience Coordinator Onboarding')"><div class="img a">CLIENT EXPERIENCE<br>COORDINATOR ONBOARDING</div><div class="cb"><h3>Client Experience Coordinator Onboarding</h3><p>Support inbox, canned replies, billing questions, cancellation flow, crisis escalation.</p><div class="bar"><i style="width:50%;background:var(--good)"></i></div><p>1 of 2 complete</p></div></div>
+      <div class="card course" onclick="toast('Opens Hub Admin Playbook')"><div class="img b">HUB ADMIN<br>PLAYBOOK</div><div class="cb"><h3>Hub Admin Playbook</h3><p>Granting tiers, Whop reconcile, posting replays, running the accountability list, audit log.</p><div class="bar"><i style="width:0%"></i></div><p>Draft · publishes with Phase 1</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCOUNT SETTINGS -->
+<section class="page hidden" id="settings" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div><div class="eyebrow">Account settings</div><h2>Manage your membership</h2></div>
+    <div class="settings">
+      <div class="card snav">
+        <button class="on" data-set="membership">Membership &amp; billing</button>
+        <button data-set="benefits">Benefits &amp; features</button>
+        <button data-set="programs">Change programs</button>
+        <button data-set="profile">Profile</button>
+        <button data-set="notif">Notifications</button>
+        <button data-set="access">Accessibility</button>
+        <button data-set="agreement">Membership agreement</button>
+        <button data-set="support">Support &amp; contact</button>
+        <button data-set="cancel">How to cancel</button>
+      </div>
+      <div class="card" style="padding:18px;display:grid;gap:4px;align-content:start">
+        <div id="set-membership">
+          <h3 style="margin-bottom:10px">Membership &amp; billing</h3>
+          <div class="plan" style="margin-bottom:12px">
+            <div><span>Current plan</span><b id="setPlan">Recovery Academy</b></div>
+            <div><span>Price</span><b id="setPrice">$297 / month</b></div>
+            <div><span>Status</span><b id="setStatus">Active · renews Nov 22</b></div>
+            <div><span>Payment method</span><b>Visa ····4242</b></div>
+          </div>
+          <div class="srow"><div class="l"><b>Update payment method</b><span>Handled securely by Whop. You never leave the app.</span></div><button class="btn sm ghost" onclick="toast('Opens Whop payment method form')">Update</button></div>
+          <div class="srow"><div class="l"><b>Invoices</b><span>Oct 23 · $297.00 · paid</span></div><button class="btn sm ghost">View all</button></div>
+          <div class="srow"><div class="l"><b>Upgrade</b><span id="setUp">Move to Platinum or add Continuity</span></div><button class="btn sm outline" onclick="toast('Compare programs')">Compare</button></div>
+          <div class="srow"><div class="l"><b>Pause or cancel</b><span>Access stays until the end of your paid period</span></div><button class="btn sm ghost" onclick="toast('Cancellation flow: reason, offer, confirm')">Manage</button></div>
+        </div>
+        <div id="set-benefits" class="hidden">
+          <h3 style="margin-bottom:10px">Membership benefits and features</h3>
+          <p class="body" style="font-size:13px;margin-bottom:10px">As a member of our community, you have access to a wide range of tools and support designed to help you succeed in your recovery journey.</p>
+          <div class="srow"><div class="l"><b>30-Day Roadmap</b><span>Your first 30 days, mapped out step by step</span></div><a href="#classroom" onclick="setTab('classroom');return false" class="btn sm ghost">Open</a></div>
+          <div class="srow"><div class="l"><b>Monthly Recovery Analysis</b><span>Personalized feedback from our coaches each month</span></div><button class="btn sm ghost">Submit</button></div>
+          <div class="srow"><div class="l"><b>Nervous System Health Assessment</b><span>Monthly; identifies roadblocks and next steps</span></div><button class="btn sm ghost">Take it</button></div>
+          <div class="srow"><div class="l"><b>Video modules</b><span>Brain retraining, science of mindset, flare-ups, symptom solutions</span></div><button class="btn sm ghost" onclick="setTab('classroom')">Open</button></div>
+          <div class="srow"><div class="l"><b>Live calls and replays</b><span>Shown on your calendar; replays post automatically</span></div><button class="btn sm ghost" onclick="setTab('calendar')">Calendar</button></div>
+        </div>
+        <div id="set-programs" class="hidden">
+          <h3 style="margin-bottom:10px">Change programs</h3>
+          <p class="body" style="font-size:13px;margin-bottom:10px">Pick the level of support that fits where you are today. Changes take effect immediately; billing is prorated by Whop.</p>
+          <div class="tiers">
+            <div class="tcard"><div class="nm">Recovery School</div><div class="pr">$47<small>/mo</small></div><div class="body" style="font-size:12px">1 live call a week, all modules</div><button class="btn sm ghost">Downgrade</button></div>
+            <div class="tcard" style="border-color:var(--cyan)"><div class="nm">Recovery Academy</div><div class="pr">$297<small>/mo</small></div><div class="body" style="font-size:12px">8 group calls a week, roadmap</div><span class="tier acad">Current</span></div>
+            <div class="tcard"><div class="nm">Continuity</div><div class="pr">$397<small>/mo</small></div><div class="body" style="font-size:12px">Monthly coach check-in, private chat</div><button class="btn sm outline" onclick="toast('Whop checkout · prorated')">Upgrade</button></div>
+            <div class="tcard"><div class="nm">Beyond Recovery</div><div class="pr">Free<small> 14 days, then from $297/mo</small></div><div class="body" style="font-size:12px">7 Areas of Life Mastery, growth calls</div><button class="btn sm outline" onclick="toast('Starts 14-day trial on Whop')">Start trial</button></div>
+            <div class="tcard plat"><div class="nm">Platinum</div><div class="pr">By application</div><div class="body" style="font-size:12px">1:1 coach, check-in calls, journals</div><button class="btn sm gold" onclick="toast('Books a call with enrollment')">Apply</button></div>
+          </div>
+        </div>
+        <div id="set-profile" class="hidden"><h3 style="margin-bottom:10px">Profile</h3><div class="srow"><div class="l"><b>Name</b><span id="setName">Lailah Eloche</span></div><button class="btn sm ghost">Edit</button></div><div class="srow"><div class="l"><b>Location and time zone</b><span>Perth, WA · AWST</span></div><button class="btn sm ghost">Edit</button></div><div class="srow"><div class="l"><b>Bio</b><span>Shown on your member card</span></div><button class="btn sm ghost">Edit</button></div></div>
+        <div id="set-notif" class="hidden"><h3 style="margin-bottom:10px">Notifications</h3><div class="srow"><div class="l"><b>Call reminders</b><span>Push and email, 1 hour before</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="srow"><div class="l"><b>Coach messages</b><span>Push immediately</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="srow"><div class="l"><b>Community digest</b><span>Email, weekly</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="srow"><div class="l"><b>Replies to my posts</b><span>Push</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div></div>
+        <div id="set-access" class="hidden"><h3 style="margin-bottom:10px">Accessibility</h3><div class="srow"><div class="l"><b>Large text</b><span>Increases all text 15%</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div><div class="srow"><div class="l"><b>Reduce motion</b><span>No animations or auto-playing video</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div><div class="srow"><div class="l"><b>Dim mode</b><span>Lower contrast for light sensitivity</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div></div>
+        <div id="set-agreement" class="hidden"><h3 style="margin-bottom:10px">Membership agreement</h3><p class="body" style="font-size:13px">Signed Oct 23, 2026 via PandaDoc. Download a copy or review the current terms.</p><div class="srow"><div class="l"><b>Service Agreement · Recovery Academy</b><span>v4 · signed</span></div><button class="btn sm ghost">Download</button></div></div>
+        <div id="set-support" class="hidden"><h3 style="margin-bottom:10px">Support and contact</h3><div class="srow"><div class="l"><b>Message client coordination</b><span>Billing, scheduling, access. Replies within 1 business day.</span></div><button class="btn sm" onclick="toast('Opens support thread')">Message</button></div><div class="srow"><div class="l"><b>Email</b><span>support@cfsrecovery.co</span></div><button class="btn sm ghost">Copy</button></div></div>
+        <div id="set-cancel" class="hidden"><h3 style="margin-bottom:10px">How to cancel</h3><p class="body" style="font-size:13px;margin-bottom:10px">You can cancel any time. Your access continues until the end of the period you have paid for, and your posts and progress are kept for 12 months in case you return.</p><ol class="body" style="font-size:13px;padding-left:18px;display:grid;gap:4px"><li>Open Membership &amp; billing.</li><li>Choose Pause or cancel.</li><li>Tell us why (optional) and confirm.</li></ol></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEEDBACK (demo review) -->
+<section class="page hidden" id="feedback" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="section-h"><div><div class="eyebrow gold">Demo review</div><h2>Team feedback on the demo</h2></div><div class="r"><button class="btn sm gold" onclick="toggleFb(true);setTab('path')">💬 Add feedback</button></div></div>
+    <p class="body" style="font-size:13px;max-width:72ch">Turn on <b>Feedback</b> in the bar at the top, then click anything in the demo to leave a note on it. Notes are shared with everyone who has this link and grouped here by screen. Click a note to jump to it.</p>
+    <div id="fbPanel" class="card" style="padding:16px;display:grid;gap:18px"><div class="fb-empty">No notes yet.</div></div>
+  </div>
+</section>
+
+<!-- ADMIN -->
+<section class="page hidden" id="admin" style="grid-template-columns:1fr">
+  <div style="display:grid;gap:16px;min-width:0">
+    <div class="section-h"><div><div class="eyebrow">Admin · Operations</div><h2>Monday, Oct 26</h2></div><div class="r adm-nav"><button class="chip on" data-adm="over">Overview</button><button class="chip" data-adm="members">Members</button><button class="chip" data-adm="billing">Billing &amp; trials</button><button class="chip" data-adm="att">Attendance</button><button class="chip" data-adm="coach">Coach inbox</button></div></div>
+
+    <div id="adm-billing" class="hidden" style="display:grid;gap:16px">
+      <div class="card" style="padding:16px;display:grid;gap:12px">
+        <div class="section-h"><div><h3>Products and free trials</h3><p class="muted" style="font-size:12px">Whop is the billing system. Edit here and the change is written to Whop; the platform grants access from Whop's webhooks.</p></div><div class="r"><button class="btn sm ghost" onclick="toast('Opens Whop dashboard in a new tab')">Open Whop</button><button class="btn sm" onclick="toast('Saved to Whop · checkout links updated')">Save</button></div></div>
+        <div class="tiers">
+          <div class="tcard"><div class="nm">Recovery School</div><div class="pr">$47<small>/mo</small></div><div class="muted" style="font-size:11px">Whop plan_school_47 · 203 active</div><div class="trial"><span>Free trial</span><div style="display:flex;gap:6px;align-items:center"><select><option>7 days</option><option>3 days</option><option>14 days</option></select><div class="toggle on" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'7-day trial ON for School':'Trial OFF for School: checkout charges today')"></div></div></div></div>
+          <div class="tcard"><div class="nm">Recovery Academy</div><div class="pr">$297<small>/mo</small></div><div class="muted" style="font-size:11px">Whop plan_academy_297 · 512 active</div><div class="trial"><span>Free trial</span><div style="display:flex;gap:6px;align-items:center"><select><option>7 days</option><option>3 days</option><option>14 days</option></select><div class="toggle on" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'7-day trial ON for Academy':'Trial OFF for Academy')"></div></div></div></div>
+          <div class="tcard"><div class="nm">Continuity</div><div class="pr">$397<small>/mo</small></div><div class="muted" style="font-size:11px">Whop plan_continuity_397 · 44 active</div><div class="trial"><span>Free trial</span><div style="display:flex;gap:6px;align-items:center"><select disabled><option>7 days</option></select><div class="toggle" onclick="this.classList.toggle('on');toast('Trials are off for Continuity (post-Platinum offer)')"></div></div></div></div>
+          <div class="tcard"><div class="nm">Beyond Recovery</div><div class="pr">from $297<small>/mo</small></div><div class="muted" style="font-size:11px">3 tiers: Momentum, Growth, Ascend · 61 active</div><div class="trial"><span>Free trial</span><div style="display:flex;gap:6px;align-items:center"><select><option>14 days</option><option>7 days</option></select><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div></div>
+          <div class="tcard plat"><div class="nm">Platinum</div><div class="pr">Invoice<small> · 6 or 12 months</small></div><div class="muted" style="font-size:11px">Deposits and deferred starts via Whop one-time plans · 312 active</div><div class="trial"><span>Free trial</span><span class="muted">n/a · granted by ops</span></div></div>
+          <div class="tcard"><div class="nm">Foundations</div><div class="pr">Free</div><div class="muted" style="font-size:11px">No Whop plan · 3,904 members</div><div class="trial"><span>Free trial</span><span class="muted">n/a</span></div></div>
+        </div>
+        <p class="notice">Trials apply to recurring plans only. Whop blocks a second trial for the same person automatically. Turning a trial off changes the checkout link; existing trials run to their end date.</p>
+      </div>
+      <div class="admin-grid">
+        <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Active trials · 42</h3>
+          <div class="tbl"><table><tr><th>Member</th><th>Plan</th><th>Ends</th><th>Engaged</th><th></th></tr>
+          <tr><td>Navina Heise</td><td>Academy</td><td>Nov 2 (7d)</td><td><span class="st g"></span>3 lessons, 1 call</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+          <tr><td>Nicole Valisova</td><td>School</td><td>Oct 30 (4d)</td><td><span class="st w"></span>0 lessons</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+          <tr><td>Marcus T.</td><td>Beyond Recovery</td><td>Nov 8 (14d)</td><td><span class="st g"></span>2 calls</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+          <tr><td colspan="5" class="muted">Trial → paid, last 30 days: 31% · best: trials who attend one call convert at 58%</td></tr></table></div></div>
+        <div class="card" style="padding:16px;display:grid;gap:10px"><h3>How a payment becomes access</h3>
+          <div class="timeline">
+            <div><span class="t">1. Checkout</span><span>Member buys on the web (Whop checkout), with or without a trial</span></div>
+            <div><span class="t">2. Webhook</span><span>Whop sends <code>membership.activated</code>, signed</span></div>
+            <div><span class="t">3. Grant</span><span>Hub matches the email, grants the tier, sends the welcome sequence</span></div>
+            <div><span class="t">4. Trial ends</span><span><code>membership.trial_ending_soon</code> → nudge; then first charge</span></div>
+            <div><span class="t">5. Failed charge</span><span><code>payment.failed</code> → 7-day grace, retry link emailed, ops alerted</span></div>
+            <div><span class="t">6. Revoke</span><span>Grace ends → tier removed, posts kept; rejoin restores everything</span></div>
+            <div><span class="t">Nightly</span><span>Reconcile job compares Whop memberships to Hub entitlements and fixes drift</span></div>
+          </div>
+          <div class="code">POST /webhooks/whop            ← membership.activated
+verify signature (ws_… secret)
+member = find_or_create(email)
+grant(member, plan→tier, source="whop", until=renews_at)
+200 OK in &lt; 5s</div></div>
+      </div>
+      <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Revenue (Whop) · last 30 days</h3>
+        <div class="kpis"><div class="kpi"><span>MRR</span><b>$187,430</b></div><div class="kpi"><span>New MRR</span><b>$7,425</b><span class="d">41 signups</span></div><div class="kpi"><span>Churned MRR</span><b>$3,268</b><span class="d down">11 cancels</span></div><div class="kpi"><span>Failed payments</span><b>6</b><span class="d down">$1,782 at risk</span></div><div class="kpi"><span>Refunds</span><b>1</b><span class="d">$297</span></div></div>
+      </div>
+    </div>
+
+    <div id="adm-over" style="display:grid;gap:16px">
+      <div class="kpis">
+        <div class="card kpi"><span>Members</span><b>4,912</b><span class="d">+41 in 30d</span></div>
+        <div class="card kpi"><span>MRR (Whop)</span><b>$187,430</b><span class="d">+$7,425 new</span></div>
+        <div class="card kpi"><span>Trial → paid (7-day)</span><b>31%</b><span class="d">42 trials active</span></div>
+        <div class="card kpi"><span>Weekly active</span><b>72%</b><span class="d">Academy 76 · Platinum 91</span></div>
+        <div class="card kpi"><span>Coach reply SLA</span><b>96%</b><span class="d down">3 threads over 24h</span></div>
+        <div class="card kpi"><span>Failed payments</span><b>6</b><span class="d down">grace ends in 4 days</span></div>
+      </div>
+      <div class="admin-grid">
+        <div class="card" style="padding:16px;display:grid;gap:10px">
+          <h3>Signups, last 30 days</h3>
+          <svg class="spark" viewBox="0 0 300 56" preserveAspectRatio="none" aria-label="Signups per day"><polyline fill="rgba(51,187,255,.15)" stroke="none" points="0,56 0,44 20,40 40,42 60,30 80,34 100,26 120,30 140,22 160,28 180,18 200,24 220,14 240,20 260,10 280,16 300,8 300,56"/><polyline fill="none" stroke="#33BBFF" stroke-width="2" points="0,44 20,40 40,42 60,30 80,34 100,26 120,30 140,22 160,28 180,18 200,24 220,14 240,20 260,10 280,16 300,8"/><circle cx="300" cy="8" r="3" fill="#33BBFF"/></svg>
+          <div class="tbl"><table><tr><th>Source</th><th>Signups</th><th>Share</th></tr><tr><td>Email invite</td><td>20</td><td>49%</td></tr><tr><td>Direct</td><td>12</td><td>29%</td></tr><tr><td>cfsrecovery.co</td><td>5</td><td>12%</td></tr><tr><td>YouTube / Google</td><td>4</td><td>10%</td></tr></table></div>
+        </div>
+        <div class="card" style="padding:16px;display:grid;gap:10px">
+          <h3>Needs attention today</h3>
+          <div class="tbl"><table>
+            <tr><td><span class="st c"></span>Platinum thread, no coach reply 31h</td><td>Ghazi A. → Olga</td><td><button class="btn sm ghost">Open</button></td></tr>
+            <tr><td><span class="st c"></span>Payment failed, day 3 of 7 grace</td><td>Beate S. · Academy</td><td><button class="btn sm ghost">Retry link</button></td></tr>
+            <tr><td><span class="st w"></span>0 calls in 30 days</td><td>14 Academy members</td><td><button class="btn sm ghost">List</button></td></tr>
+            <tr><td><span class="st w"></span>Trials ending in 48h</td><td>9 School trials</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+            <tr><td><span class="st g"></span>Replay ready: Academy Call A (Oct 26)</td><td>Zoom recording</td><td><button class="btn sm" onclick="toast('Posted to Academy · Call Replays')">Post replay</button></td></tr>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="adm-members" class="hidden" style="display:grid;gap:16px">
+      <div class="chips"><span class="chip on">Active 4,912</span><span class="chip">Trial 42</span><span class="chip">Cancelling 18</span><span class="chip">Churned</span><span class="chip">Filter ⚙</span><span class="chip">Export CSV</span><button class="btn sm" style="margin-left:auto">Invite members</button></div>
+      <div class="card member">
+        <div class="hd"><div class="av">LE</div><div><b style="font-size:16px">Lailah Eloche</b> <span class="tier acad">Academy</span><br><span class="muted" style="font-size:12px">Perth, WA · joined Oct 23, 2026 · active 6h ago</span></div><div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm ghost">Message</button><button class="btn sm ghost">View as member</button><button class="btn sm outline">Change tier</button></div></div>
+        <div class="kv">
+          <div><span>Billing (Whop)</span><b>$297/mo · renews in 27 days</b></div>
+          <div><span>Entitlements</span><b>Academy (Whop) · School (inherited)</b></div>
+          <div><span>Coach</span><b>Client coordination (Dana)</b></div>
+          <div><span>Roadmap</span><b>Day 8 of 30 · 27%</b></div>
+          <div><span>Calls attended</span><b>5 of 8 this month</b></div>
+          <div><span>Last check-in</span><b>Oct 24 · "Slept 7h, walked 10 min"</b></div>
+        </div>
+        <div><div class="eyebrow">Timeline</div><div class="timeline" style="margin-top:8px">
+          <div><span class="t">Oct 26 10:14</span><span>Attended Academy Call A · 71 min (Zoom)</span></div>
+          <div><span class="t">Oct 24 18:02</span><span>Posted Thriver Check-In</span></div>
+          <div><span class="t">Oct 23 09:30</span><span>Whop: membership.activated · Academy $297/mo</span></div>
+          <div><span class="t">Oct 23 09:31</span><span>Entitlement granted: Academy (source: Whop)</span></div>
+          <div><span class="t">Oct 23 09:40</span><span>Welcome sequence sent · 1-on-1 welcome call booked</span></div>
+        </div></div>
+        <div><div class="eyebrow">Internal notes</div><p class="body" style="font-size:13px;margin-top:6px">Came in from the Skool network. Mentioned light sensitivity on the welcome call; suggested large-text mode.</p></div>
+      </div>
+    </div>
+
+    <div id="adm-att" class="hidden" style="display:grid;gap:16px">
+      <div class="admin-grid">
+        <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Attendance rate by call series, Oct</h3>
+          <div class="tbl"><table><tr><th>Series</th><th>Eligible</th><th>Avg attended</th><th>Rate</th></tr>
+          <tr><td>Academy Call A (Mon/Thu 10am)</td><td>515</td><td>148</td><td>29%</td></tr>
+          <tr><td>Academy Call B (Mon/Thu 5pm)</td><td>515</td><td>121</td><td>23%</td></tr>
+          <tr><td>Integrations (Tue/Fri)</td><td>515</td><td>96</td><td>19%</td></tr>
+          <tr><td>Onboarding (Wed)</td><td>41</td><td>31</td><td>76%</td></tr>
+          <tr><td>Platinum Q&amp;A (Fri 8am)</td><td>312</td><td>204</td><td>65%</td></tr>
+          <tr><td>Caregiver Call (Thu 9am)</td><td>58</td><td>22</td><td>38%</td></tr></table></div></div>
+        <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Accountability list · 0 calls in 30 days</h3>
+          <div class="tbl"><table><tr><th>Member</th><th>Tier</th><th>Last call</th><th>Coach</th><th></th></tr>
+          <tr><td>Nicole Valisova</td><td>Academy</td><td>never (joined Oct 23)</td><td>Dana</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+          <tr><td>Beate Streicher</td><td>Academy</td><td>Sep 18</td><td>Dana</td><td><button class="btn sm ghost">Nudge</button></td></tr>
+          <tr><td>Ghazi A.</td><td><span class="tier plat">Platinum</span></td><td>Sep 29</td><td>Olga</td><td><button class="btn sm ghost">Flag coach</button></td></tr>
+          <tr><td>Henri K.</td><td><span class="tier plat">Platinum</span></td><td>Oct 2</td><td>Olga</td><td><button class="btn sm ghost">Flag coach</button></td></tr>
+          <tr><td colspan="5" class="muted">+10 more · Export</td></tr></table></div></div>
+      </div>
+      <p class="notice">Attendance comes from Zoom participant reports matched to each member's personal join link. Phone dial-ins show here for manual match.</p>
+    </div>
+
+    <div id="adm-coach" class="hidden" style="display:grid;gap:16px">
+      <div class="card" style="padding:16px;display:grid;gap:10px"><h3>Coach inbox · SLA view</h3>
+        <div class="tbl"><table><tr><th>Coach</th><th>Open threads</th><th>Unread</th><th>Over 24h</th><th>Median reply</th></tr>
+        <tr><td>Chelsea (Platinum A1)</td><td>11</td><td>3</td><td><span class="st g"></span>0</td><td>2h 10m</td></tr>
+        <tr><td>Ariel (Platinum A2)</td><td>12</td><td>5</td><td><span class="st g"></span>0</td><td>3h 40m</td></tr>
+        <tr><td>Crista (Platinum B)</td><td>9</td><td>2</td><td><span class="st w"></span>1</td><td>5h 05m</td></tr>
+        <tr><td>Olga (1:1 Support)</td><td>38</td><td>14</td><td><span class="st c"></span>2</td><td>9h 20m</td></tr>
+        <tr><td>Client coordination (Dana, Adrianne)</td><td>64</td><td>9</td><td><span class="st g"></span>0</td><td>1h 15m</td></tr></table></div>
+        <p class="notice">Reassign a thread, loop in a coordinator, or set a coach's away-hours notice from here. Every change is in the audit log.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<nav class="bottombar" id="bottombar"></nav>
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+</div>
+<div class="fb-hint">Feedback mode: click anything to leave a note · Esc to exit</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   TEAM FEEDBACK STORAGE
+   Follow the setup at the top of Code.gs, then paste the Web app URL
+   (ends in /exec) between the quotes. Blank = notes save per device only.
+   ════════════════════════════════════════════════════════════════ */
+const SHEET_API_URL='';
+
+const ROLES={
+  foundations:{name:'Navina Heise',av:'NH',label:'Foundations',spaces:['Foundations'],plat:false,staff:false,side:['Foundations','Free community for anyone starting to understand ME/CFS and Long Covid recovery.'],plan:['Foundations','Free','Active','Start a 7-day School trial']},
+  school:{path:true,name:'David Friz',av:'DF',label:'School',spaces:['Foundations','Recovery School'],plat:false,staff:false,side:['Recovery School','Self-paced modules and one live group call a week.'],plan:['Recovery School','$47 / month','Active · renews Nov 12','Upgrade to Academy for 8 calls a week']},
+  academy:{path:true,name:'Lailah Eloche',av:'LE',label:'Academy',spaces:['Foundations','Recovery School','Recovery Academy'],plat:false,staff:false,side:['Recovery Academy','Learn everything you need to know about recovering from ME/CFS and Long Covid using a proven system.'],plan:['Recovery Academy','$297 / month','Active · renews Nov 22','Move to Continuity or apply for Platinum']},
+  continuity:{name:'Kathy J.',av:'KJ',label:'Continuity',spaces:['Foundations','Recovery School','Recovery Academy','Continuity'],plat:false,chat:true,staff:false,side:['Continuity','Keep the personal support you relied on: a monthly check-in call and private chat with your coaches.'],plan:['Continuity','$397 / month','Active · renews Nov 4','Return to Platinum or step down to Academy']},
+  beyond:{name:'Mischa M.',av:'MM',label:'Beyond Recovery',spaces:['Foundations','Recovery School','Recovery Academy','Beyond Recovery'],plat:false,staff:false,side:['Beyond Recovery','You did the work. Now become the best version of yourself: the 7 Areas of Life Mastery and weekly growth calls.'],plan:['Beyond Recovery · Growth','$397 / month','Trial · first charge Nov 8','Change tier: Momentum, Growth, Ascend']},
+  platinum:{name:'Anthony Charro',av:'AC',label:'Platinum',spaces:['Foundations','Recovery School','Recovery Academy','Platinum'],plat:true,chat:true,staff:false,side:['Platinum','1:1 coaching with Chelsea, weekly Q&A, Platinum modules and video journals.'],plan:['Platinum 12 Months','Paid in full · $0 due','Sep 29, 2026 → Sep 28, 2027','Continuity available when your program ends']},
+  caregiver:{name:'Maria Charro',av:'MC',label:'Caregiver',caregiver:true,chat:true,spaces:[],plat:false,staff:false,side:['Caregiver space','Supporting Anthony. Your modules, the Caregiver Call, and a direct line to his coach.'],plan:['Caregiver access','Included with Anthony\'s Platinum','Active while his program runs · ends Sep 28, 2027','Linked to Anthony Charro (Platinum 12 Months)']},
+  staff:{path:true,name:'Preston',av:'PR',label:'Staff',spaces:['Foundations','Recovery School','Recovery Academy','Continuity','Beyond Recovery','Platinum'],plat:true,chat:true,staff:true,side:['Thriver Hub','All spaces, all tiers, admin console.'],plan:['Staff','—','—','—']}
+};
+const POSTS=[
+  {space:'Recovery Academy',min:'academy',pin:true,who:'Miguel Bautista 🚀',av:'MB',when:'May \'23 · Announcements',title:'[START HERE] Welcome to Recovery Academy!',body:'Great to see you in here :) You\'ve just taken the first step to turn around your situation to go from Survivor to Thriver, someone who has the ability to live life to the fullest without limitations.',likes:245,comments:0},
+  {space:'Platinum',min:'platinum',pin:true,who:'Coach Chelsea',av:'CV',when:'Today · Announcements',title:'Platinum Week 4 presentation is tomorrow, 8am PT',body:'Replay of the Week 3 Q&A is in your coach thread and under Call Replays. Bring one question about screen time and capacity; we are covering it live.',likes:38,comments:6,tier:'plat'},
+  {space:'Recovery Academy',min:'academy',who:'Mandie Green',av:'MG',when:'10d · Wins / Celebrations 🏅',title:'My Dating App Profile Pics Are Up!',body:'It\'s up after some trepidation, but I\'m proud of myself for putting myself back out there again after many years of being married. Wish me luck!',likes:87,comments:34},
+  {space:'Recovery Academy',min:'academy',who:'Coach Crista',av:'CT',when:'1d · Call Replays 🎥',title:'Replay: Academy Call A · Oct 22 · Flare-ups and adjustments',body:'Posted automatically from Zoom. Chapters: 0:00 check-ins · 14:20 flare-up framework · 41:05 Q&A. 148 Thrivers attended.',likes:52,comments:9},
+  {space:'Recovery School',min:'school',who:'Vilma Resa C.',av:'VC',when:'3h · Thriver Check-In 💪',title:'Week 6 check-in: first 20-minute walk without payback',body:'Used the pacing tool from Week 4 and the body scan before. Slept through the night after. Small, but it is the first time in two years.',likes:61,comments:18},
+  {space:'Foundations',min:'foundations',who:'Miguel Bautista 🚀',av:'MB',when:'2d · Golden Nuggets 🏆',title:'Your nervous system is not broken, it is overprotective',body:'Short clip from Thursday\'s free webinar. If this lands for you, the 30-day roadmap in Academy walks through how to retrain it step by step.',likes:412,comments:71},
+  {space:'Foundations',min:'foundations',who:'Nicole Valisova',av:'NV',when:'9h · Questions ?',title:'Is brain fog the same as PEM?',body:'CEO of couch here. Trying to understand whether the fog I get after a video call is a crash or something else.',likes:14,comments:11},
+  {space:'Beyond Recovery',min:'beyond',only:['beyond','staff'],who:'Miguel Bautista 🚀',av:'MB',when:'1d · Announcements',title:'Growth Call this week: the 7 Areas of Life Mastery, area 3 (relationships)',body:'Bring your assessment scores. Momentum and Growth tiers join live; Ascend has the small-group breakout after.',likes:29,comments:7},
+  {space:'Continuity',min:'continuity',only:['continuity','staff'],who:'Coach Olga',av:'OL',when:'2d · Announcements',title:'November check-in calls are open to book',body:'Your monthly 1:1 check-in slots for November are live. Book from your profile or ask in your coach thread.',likes:17,comments:3}
+];
+const ORDER=['foundations','school','academy','continuity','beyond','platinum'];
+// Continuity and Beyond Recovery sit above Academy (they include it) but are not Platinum.
+const EVENTS=[
+  {d:'Mon',t:'10am',name:'Academy Call A',min:'academy'},{d:'Mon',t:'5pm',name:'Academy Call B',min:'academy'},
+  {d:'Tue',t:'10am',name:'Integrations',min:'academy'},{d:'Tue',t:'8am',name:'Platinum Week 4',min:'platinum',plat:true},
+  {d:'Wed',t:'10am',name:'Onboarding',min:'academy'},{d:'Wed',t:'11am',name:'School Call',min:'school'},
+  {d:'Thu',t:'9am',name:'Caregiver Call',min:'platinum',plat:true},{d:'Thu',t:'10am',name:'Academy Call A',min:'academy'},{d:'Thu',t:'5pm',name:'Academy Call B',min:'academy'},
+  {d:'Fri',t:'8am',name:'Platinum Q&A',min:'platinum',plat:true},{d:'Fri',t:'10am',name:'Integrations',min:'academy'},{d:'Thu',t:'6pm',name:'Free webinar',min:'foundations'},
+  {d:'Wed',t:'1pm',name:'Beyond Growth Call',min:'beyond',only:['beyond','staff']}
+];
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let role='academy', tab='community';
+const $=s=>document.querySelector(s);
+const lvl=r=>ORDER.indexOf(r);
+function can(min,only){const r=ROLES[role];if(r.staff)return true;if(only)return only.includes(role);if(min==='platinum')return !!r.plat;if(min==='beyond'||min==='continuity')return role===min;return lvl(role)>=lvl(min);}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2200);return false;}
+
+function render(){
+  const r=ROLES[role];
+  $('#meAv').textContent=r.av;$('#meAv2').textContent=r.av;
+  $('#sideTitle').textContent=r.side[0];$('#sideDesc').textContent=r.side[1];
+  $('#progName').textContent=r.name+' · '+r.label;
+  $('#profName').textContent=r.name;
+  $('#tabChat').classList.toggle('hidden',!r.chat);
+  $('#tabChat').innerHTML=r.staff?'Coach inbox':'My Coach<span class="lock">◆</span>';
+  $('#tabAdmin').classList.toggle('hidden',!r.staff);
+  $('#tabPath').classList.toggle('hidden',!r.path);
+  if(r.caregiver&&['path','community','progress','profile','admin','training'].includes(tab))setTab('classroom');else if(tab==='path'&&!r.path)setTab('community');else if(tab==='community'&&r.path&&!window._userTabbed)setTab('path');
+  $('#tabTrain').classList.toggle('hidden',!r.staff);
+  document.querySelector('[data-tab=community]').classList.toggle('hidden',!!r.caregiver);
+  $('#tabProg').classList.toggle('hidden',!!r.caregiver);
+  document.body.classList.toggle('is-caregiver',!!r.caregiver);
+  $('#tabProg').dataset.tab=(r.plat&&!r.staff)?'profile':'progress';
+  $('#tabProg').textContent=(r.plat&&!r.staff)?'My Profile':'My Progress';
+  document.querySelector('[data-set=programs]').classList.toggle('hidden',!!r.caregiver);
+  $('#setPlan').textContent=r.plan[0];$('#setPrice').textContent=r.plan[1];$('#setStatus').textContent=r.plan[2];$('#setUp').textContent=r.plan[3];$('#setName').textContent=r.name;
+  $('#msgN').textContent=r.staff?'14':(r.plat?'1':'0');
+  $('#nextCall').classList.toggle('hidden',lvl(role)<1&&!r.staff);
+  // spaces
+  $('#spaceChips').innerHTML=['All spaces',...r.spaces].map((s,i)=>`<span class="chip ${i?'':'on'}">${s}</span>`).join('');
+  // feed
+  const list=POSTS.filter(p=>can(p.min,p.only)).sort((a,b)=>(b.pin?1:0)-(a.pin?1:0));
+  let html=list.map(p=>`<article class="card post ${p.pin?'pinned':''}">
+    <div class="head"><div class="avatar" style="width:36px;height:36px;font-size:11px">${p.av}</div><div><div class="name">${p.who}</div><div class="meta">${p.when} · in ${p.space}</div></div>${p.pin?'<span class="pin">📌 Pinned</span>':''}</div>
+    <h3>${p.title} ${p.tier?'<span class="tier plat">Platinum</span>':''}</h3><p>${p.body}</p>
+    <div class="foot"><span class="likes">👍 ${p.likes}</span><span>💬 ${p.comments}</span></div></article>`).join('');
+  if(!r.plat&&!r.staff&&role!=='beyond'){
+    const next=role==='foundations'?['Recovery School','$47/mo · 1 live call a week, all modules','Start 7-day free trial']:role==='school'?['Recovery Academy','$297/mo · 8 group calls a week, 30-day roadmap, monthly Recovery Analysis','Start 7-day free trial']:role==='continuity'?['Beyond Recovery','Already recovered and growing? The 7 Areas of Life Mastery, from $297/mo','Start 14-day free trial']:['Platinum','1:1 coach chat, weekly Q&A, Platinum modules','Apply for 1-on-1 support'];
+    html+=`<div class="gate"><div class="eyebrow gold">Next level</div><h3>${next[0]}</h3><p class="body">${next[1]}</p><div><button class="btn gold sm" onclick="toast('Opens Whop checkout on the web; access unlocks the moment payment clears.')">${next[2]}</button></div></div>`;
+  }
+  $('#feed').innerHTML=html;
+  // courses
+  const C=[
+    {t:'Academy Start Here · 30-Day Roadmap',img:'a',txt:'START HERE<br>YOUR 30 DAY ROADMAP',p:27,min:'academy',open:true},
+    {t:'Tools & Resources',img:'b',txt:'TOOLS &amp;<br>RESOURCES',p:20,min:'school',d:'Step-by-step tools to retrain your nervous system'},
+    {t:'Platinum · Video Modules',img:'c',txt:'PLATINUM<br>VIDEO MODULES',p:2,min:'platinum',d:'Live small-group sessions and the modules behind them'},
+    {t:'7 Areas of Life Mastery',img:'b',txt:'7 AREAS OF<br>LIFE MASTERY',p:14,min:'beyond',only:['beyond','staff'],d:'Beyond Recovery series with the Growth Assessment'},
+    {t:'Foundations · Understanding Recovery',img:'d',txt:'UNDERSTANDING<br>RECOVERY',p:100,min:'foundations',d:'Free intro series'}
+  ].filter(c=>!c.only||c.only.includes(role)||ROLES[role].staff||c.min!=='beyond');
+  const CG=[
+    {t:'Caregiver Start Here',img:'a',txt:'CAREGIVER<br>START HERE',p:40,min:'foundations',d:'What ME/CFS recovery asks of the people around a Thriver, and how to help without carrying it'},
+    {t:'Supporting Without Fixing',img:'b',txt:'SUPPORTING<br>WITHOUT FIXING',p:0,min:'foundations',d:'Responding to flare-ups, pacing at home, what to say and what not to say'},
+    {t:'Caregiver Call Replays',img:'d',txt:'CAREGIVER<br>CALL REPLAYS',p:0,min:'foundations',d:'Thursday 9am call, auto-posted after each session'},
+    {t:"Anthony's modules (read-only)",img:'c',txt:'HIS<br>MODULES',p:0,min:'foundations',d:'See what he is learning this week so you can speak the same language. Progress is his, not yours.'},
+    {t:'Looking After Yourself',img:'b',txt:'LOOKING AFTER<br>YOURSELF',p:0,min:'foundations',d:'Caregiver burnout, boundaries, and where to get your own support'}
+  ];
+  const courseSet=ROLES[role].caregiver?CG:C;
+  $('#clsEyebrow').textContent=ROLES[role].caregiver?'Caregiver space':'Classroom';$('#clsTitle').textContent=ROLES[role].caregiver?'Supporting Anthony':'Your courses';
+  const lbl={platinum:'Platinum',academy:'Academy',school:'School',beyond:'Beyond Recovery',continuity:'Continuity',foundations:'Foundations'};
+  $('#courses').innerHTML=courseSet.map(c=>{const ok=ROLES[role].caregiver?true:can(c.min,c.only);return `<div class="card course" style="${ok?'':'opacity:.55'}" onclick="${ok?(c.open?'showLesson(true)':`toast('Opens ${c.t}')`):`toast('${c.t} unlocks with ${lbl[c.min]}')`}">
+    <div class="img ${c.img}">${c.txt}</div>${ok?'':`<span class="tier ${c.min==='platinum'?'plat':'acad'} lockb">🔒 ${lbl[c.min]}</span>`}
+    <div class="cb"><h3>${c.t}</h3>${c.d?`<p>${c.d}</p>`:''}<div class="bar ${c.min==='platinum'?'gold':''}"><i style="width:${ok?c.p:0}%"></i></div><p>${ok?c.p+'% complete':'Locked'}</p></div></div>`}).join('');
+  // calendar
+  let g=DAYS.map(d=>`<div class="dh">${d}</div>`).join('');
+  for(let w=0;w<5;w++)for(let i=0;i<7;i++){const n=w*7+i-2;const num=n<1?n+30:n>31?n-31:n;const today=n===26;const dn=DAYS[i];
+    const evs=n>=1&&n<=31?EVENTS.filter(e=>ROLES[role].caregiver?e.name==='Caregiver Call'||e.name==='Platinum Week 4':(e.d===dn&&(!e.only||can(e.min,e.only)))).filter(e=>e.d===dn).map(e=>{const ok=can(e.min,e.only);return `<div class="ev ${e.plat?'plat':''} ${ok?'':'off'}" onclick="toast('${ok?e.name+' · Zoom link, replay and your attendance':'Included with '+e.min}')">${e.t} · ${e.name}</div>`}).join(''):'';
+    g+=`<div class="day" style="${n<1||n>31?'opacity:.35':''}"><span class="n ${today?'today':''}">${num}</span>${evs}</div>`;}
+  $('#calGrid').innerHTML=g;
+  const up=ROLES[role].caregiver?[{n:'Caregiver Call',w:'Thu Oct 29 · 9:00am PT',min:'foundations',plat:true,att:'Your call · Coach Olga hosting'},{n:"Anthony's Platinum Week 4 presentation",w:'Tue Oct 27 · 8:00am PT',min:'foundations',att:'Welcome to sit in, camera off'},{n:"Anthony's check-in call with Chelsea",w:'Nov 17 · 11:00am PT',min:'foundations',att:'Join for the last 15 minutes if he wants you there'}]:[{n:'Academy Call - B',w:'Today · 5:00–6:30pm PT',min:'academy',att:'You attended 4 of the last 6'},{n:'Platinum Week 4 presentation',w:'Tue Oct 27 · 8:00am PT',min:'platinum',plat:true,att:'Coach Chelsea hosting'},{n:'Beyond Growth Call · Area 3',w:'Wed Oct 28 · 1:00pm PT',min:'beyond',only:['beyond','staff'],att:'Bring your assessment'},{n:'Platinum Q&A',w:'Fri Oct 30 · 8:00am PT',min:'platinum',plat:true,att:'Replay auto-posts after'},{n:'Recovery School call',w:'Wed Oct 28 · 11:00am PT',min:'school',att:'Weekly'},{n:'Free webinar: PEM explained',w:'Thu Oct 29 · 6:00pm PT',min:'foundations',att:'Open to all'}].filter(e=>can(e.min,e.only));
+  $('#evlist').innerHTML=up.map(e=>`<div class="card ev-card"><div class="thumb ${e.plat?'plat':''}">${e.n}</div><div><h3>${e.n}</h3><div class="when">${e.w} · Zoom</div><div class="att">● ${e.att}</div><div class="acts"><button class="btn sm" onclick="toast('Your personal Zoom link opened; attendance is recorded automatically.')">Join</button><button class="btn sm ghost" onclick="toast('Added to your calendar (Google / Apple / Outlook)')">Add to calendar</button></div></div></div>`).join('');
+  renderChat();
+  if(typeof renderBottomBar==='function')renderBottomBar();
+  if(typeof fbPins==='function')setTimeout(fbPins,50);
+  const t=document.querySelector('.tab.on');if(t&&t.classList.contains('hidden'))setTab('community');
+}
+
+function renderChat(){
+  const r=ROLES[role];
+  if(r.staff){
+    $('#chatList').innerHTML=`<div class="h"><h3>Coach inbox</h3><span class="muted" style="font-size:11px;margin-left:auto">14 unread</span></div>
+      <div class="grp">Platinum A1 · Chelsea</div>
+      <div class="thread on"><div class="avatar" style="width:30px;height:30px;font-size:10px">AC</div><div><div class="nm">Anthony Charro</div><div class="last">share with me the replay of…</div></div><span class="unread"></span></div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">AA</div><div><div class="nm">Ariel A.</div><div class="last">Thank you, that helped</div></div></div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">GH</div><div><div class="nm">Gesa H.</div><div class="last">Flare since Sunday, should I…</div></div><span class="unread"></span></div>
+      <div class="grp">1:1 Support · Olga</div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">GA</div><div><div class="nm">Ghazi A.</div><div class="last">Hello? Is anyone there</div></div><span class="sla">31h</span></div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">HK</div><div><div class="nm">Henri K.</div><div class="last">Journal uploaded</div></div><span class="sla">26h</span></div>
+      <div class="grp">Client coordination</div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">LD</div><div><div class="nm">Lorrie Difeo</div><div class="last">…you're more than welcome to call me</div></div></div>`;
+  } else if(r.caregiver){
+    $('#chatList').innerHTML=`<div class="h"><h3>Coach thread</h3><span class="tier plat" style="margin-left:auto">caregiver</span></div>
+      <div class="thread on"><div class="avatar" style="width:30px;height:30px;font-size:10px;background:#2a6a8a">CV</div><div><div class="nm">Coach Chelsea</div><div class="last">Anthony's coach · your own thread</div></div><span class="unread"></span></div>
+      <div class="grp">Shared with you</div>
+      <div class="thread" onclick="toast('Opens Anthony\\'s current recovery plan (read-only)')"><div class="avatar" style="width:30px;height:30px;font-size:10px">🗺</div><div><div class="nm">Anthony's Recovery Plan v2</div><div class="last">He chose to share this with you</div></div></div>
+      <div class="thread" onclick="toast('Caregiver Call replay · Oct 22')"><div class="avatar" style="width:30px;height:30px;font-size:10px">🎥</div><div><div class="nm">Caregiver Call · Oct 22</div><div class="last">Replay · 48 min</div></div></div>`;
+  } else {
+    $('#chatList').innerHTML=`<div class="h"><h3>My coach</h3><span class="tier plat" style="margin-left:auto">1:1</span></div>
+      <div class="thread on"><div class="avatar" style="width:30px;height:30px;font-size:10px;background:#2a6a8a">CV</div><div><div class="nm">Coach Chelsea</div><div class="last">here's the replay of our Week 3…</div></div><span class="unread"></span></div>
+      <div class="grp">Also in this thread</div>
+      <div class="thread"><div class="avatar" style="width:30px;height:30px;font-size:10px">DW</div><div><div class="nm">Dana (coordination)</div><div class="last">Billing and scheduling</div></div></div>
+      <div class="grp">Shared with you</div>
+      <div class="thread" onclick="toast('Opens the replay in your profile folder')"><div class="avatar" style="width:30px;height:30px;font-size:10px">🎥</div><div><div class="nm">Check-in replay · Oct 20</div><div class="last">42 min</div></div></div>
+      <div class="thread" onclick="toast('Opens Recovery Plan v2')"><div class="avatar" style="width:30px;height:30px;font-size:10px">🗺</div><div><div class="nm">Recovery Plan v2</div><div class="last">Updated Oct 20</div></div></div>`;
+  }
+  if(r.caregiver){$('#conv').innerHTML=`<div class="h"><button class="back" onclick="showThreadList()">‹</button><div class="avatar" style="width:34px;height:34px;font-size:11px;background:#2a6a8a">CV</div><div class="who-h" style="flex:1 1 220px;min-width:0"><div class="nm">Coach Chelsea · Anthony's coach</div><div class="st" style="white-space:normal">Your own thread. Anthony's 1:1 thread stays private to him unless he chooses to share something here.</div></div></div>
+    <div class="msgs"><div class="daysep">Oct 23, 2026</div>
+      <div class="msg me"><div class="b">Hi Chelsea, Anthony had a rough couple of days after the screen-time conversation. Is there anything I should be doing differently at home?</div><div class="t">Maria · 8:12pm</div></div>
+      <div class="msg"><div class="b">Hi Maria, thank you for checking in. A dip after a change like that is an adjustment period, not a setback. The most helpful thing is not to react to it: keep the house calm, no "how are you feeling" check-ins, and let him lead on activity. The Supporting Without Fixing module covers this and Thursday's Caregiver Call will too. 😊</div><div class="t">Chelsea · 9:40am · read</div></div>
+      <div class="daysep">Oct 26, 2026</div>
+      <div class="msg"><div class="b">Reminder: Caregiver Call Thursday 9am PT with Olga. Bring any questions from this week.<span class="link"><b>Caregiver Call · Thu Oct 29</b>Zoom · your personal link</span></div><div class="t">Chelsea · 10:30am</div></div>
+    </div>
+    <form class="compose" onsubmit="event.preventDefault();toast('Sent');this.reset()"><input class="in" id="chatIn" placeholder="Message Chelsea"><button class="btn sm" type="button">🎤</button><button class="btn sm" type="submit">Send</button></form>`;return;}
+  $('#conv').innerHTML=`<div class="h"><button class="back" onclick="showThreadList()">‹</button><div class="avatar" style="width:34px;height:34px;font-size:11px;background:#2a6a8a">${r.staff?'AC':'CV'}</div><div class="who-h" style="flex:1 1 220px;min-width:0"><div class="nm">${r.staff?'Anthony Charro':'Coach Chelsea · your Platinum coach'}</div><div class="st" style="white-space:normal;word-break:normal">${r.staff?'Platinum A1 · joined Sep 29 · attended 6 of 8 calls · day 27':'Private to you, Chelsea and client coordination · replies within 24h on weekdays, 8am–5pm PT'}</div></div>
+    <div class="ctx">${r.staff?'<span class="ctxp">Member record</span><span class="ctxp">Reassign</span><span class="ctxp">Loop in Dana</span>':'<span class="ctxp">Book check-in</span><span class="ctxp">Add caregiver</span>'}</div></div>
+    <div class="msgs">
+      <div class="daysep">Oct 22, 2026</div>
+      <div class="msg ${r.staff?'me':''}"><div class="b">Hi Anthony, the replay link should've been in the email you got with your plan on Monday but I can always send it here too 😊<span class="link"><b>Platinum Check-In Call · Oct 20</b>Fathom replay · 42 min</span></div><div class="t">Chelsea · 10:37am</div></div>
+      <div class="msg ${r.staff?'':'me'}"><div class="b">hello chelsea regarding the screen time should i be strict with 4 hours per day or as i see my capacity increasing i can be flexible for more?</div><div class="t">Anthony · 2:45pm</div></div>
+      <div class="msg ${r.staff?'me':''}"><div class="b">Good question, I would limit it to 4 hours per day so that you can focus on non-screen activities. Non-screen activities are more regulating for the NS 😊</div><div class="t">Chelsea · 6:28pm</div></div>
+      <div class="daysep">Oct 26, 2026</div>
+      <div class="msg ${r.staff?'':'me'}"><div class="b">hello chelsea hope ur doing well. I would like you to share with me the replay of the call on friday if its feasible. Thanks</div><div class="t">Anthony · 9:47am</div></div>
+      <div class="msg ${r.staff?'me':''}"><div class="b">Hi Anthony, here's the replay of our Week 3 Q&A<span class="link"><b>Platinum Q&A · Week 3</b>Replay · also under Call Replays</span>I hope you had a great weekend, this is also a reminder for our Platinum Week 4 presentation tomorrow at 8am PT. It's on your calendar.</div><div class="t">Chelsea · 10:18am · read</div></div>
+    </div>
+    <form class="compose" onsubmit="event.preventDefault();toast('Sent');this.reset()"><input class="in" id="chatIn" placeholder="Message ${r.staff?'Anthony':'Chelsea'}"><button class="btn sm" type="button">🎤</button><button class="btn sm" type="button">📎</button><button class="btn sm" type="submit">Send</button></form>`;
+}
+
+
+
+/* ── Recovery Path data (from Road to Recovery) ── */
+const STOPS=[
+ {day:0,lbl:'Day 0',type:'start',short:'Starting Line',title:'Welcome to Recovery Academy',blurb:"You're in. This is where your 90-day road begins, and you don't drive it alone.",todo:['Watch 1.1 Welcome to Recovery Academy','Introduce yourself and share your north-star goal'],done:true},
+ {day:1,lbl:'Day 1',type:'call',short:'Onboarding Call',title:'Onboarding Call',blurb:'Your first live call. Meet the coaches, learn your way around and ask anything.',todo:['Attend the onboarding call','Add the next group call to your calendar'],done:true},
+ {day:2,lbl:'Day 2',type:'aid',short:'Group Calls',title:'Aid Station: Live Group Calls',blurb:'Eight live coaching calls every week. Pull in whenever you need fuel. Even half of them makes a big difference.',todo:['Join your first group call this week','Camera off is fine. Just show up.'],game:'Stress Threshold Stack-Up',done:true},
+ {day:3,lbl:'Day 3',type:'learn',short:'Nervous System Town',title:'Nervous System Town',blurb:'What a hypersensitive nervous system is, how it got this way, and why it can change.',todo:['Watch Days 2 and 3','Complete 3.2 Nervous System Reframe'],done:true},
+ {day:4,lbl:'Day 4',type:'hazard',short:'Adjustment Bump',title:'Your First Adjustment Bump',blurb:"Things may feel bumpier as you start changing. That's an adjustment period: the engine is working, not breaking.",todo:['Watch 4.1 and 4.2','Respond calmly. Bumps pass.','Bring it to a group call'],game:'The Pendulum',done:true},
+ {day:6,lbl:'Day 6',type:'learn',short:'Response Junction',title:'Response Junction',blurb:'A cornerstone stop. How you respond to symptoms steers the whole trip.',todo:['Watch 6.1 to 6.3'],game:'Responding Well',done:true},
+ {day:7,lbl:'Day 7',type:'milestone',short:'First Win',title:'First Win Lookout',blurb:'One week down. Pull over and look at how far you have already come.',todo:['Post a win in the community, big or small'],done:true},
+ {day:8,lbl:'Day 8',type:'aid',short:'Coach Pit Stop',title:'Coach Pit Stop: Recovery Analysis',blurb:'Submit your first Monthly Recovery Analysis so a coach can give you direct feedback.',todo:['Submit the Recovery Analysis','Take the Nervous System assessment'],done:true},
+ {day:10,lbl:'Day 10',type:'aid',short:'Roadside Assistance',title:'Roadside Assistance',blurb:"Stuck, confused or flaring? Message client coordination. Nobody drives this road alone.",todo:['Save the support thread to your home screen','Watch 10.1 Understanding Your Capacity','Play: The Optimal Zone'],game:'The Optimal Zone',today:true},
+ {day:12,lbl:'Day 12',type:'hazard',short:'Speed Check',title:'Speed Check: Pushing vs. Pacing',blurb:'Boom-and-bust is the most common wrong turn. Learn the difference between stretching and pushing.',todo:['Watch 12.1','Plan one gentle expansion for the week']},
+ {day:15,lbl:'Day 15',type:'learn',short:'Grey Zone Fork',title:'The Grey Zone Fork',blurb:'All-or-nothing thinking keeps symptoms loud. Find the grey.',todo:['Watch 15.1 and 15.2'],game:'Find the Grey'},
+ {day:18,lbl:'Week 3',type:'hazard',short:'Alligator Bayou',title:'Alligator Bayou',blurb:'The thoughts that bite: fear, doubt, comparison. Learn to spot them before they pull you under.',todo:['Thought Filter exercise'],game:'Thought Filter'},
+ {day:20,lbl:'Day 20',type:'milestone',short:"I'm Committed",title:"I'm Committed Billboard",blurb:'Two-thirds through month one. Write down what you are committing to for the rest of the drive.',todo:['Post your commitment','Attend 2 calls this week']},
+ {day:22,lbl:'Day 22',type:'hazard',short:'Symptom Roundabout',title:'Symptom Roundabout',blurb:'Symptoms that loop back on themselves. Learn the exit.',todo:['Watch 22.1'],game:'Break the Symptom Loop'},
+ {day:26,lbl:'Day 26',type:'learn',short:'Future-Self Mailbox',title:'Future-Self Mailbox',blurb:'Write a letter to the you at Day 90. The app delivers it on the day.',todo:['Write and seal your letter']},
+ {day:28,lbl:'Day 28',type:'hazard',short:'Plateau Flats',title:'Plateau Flats',blurb:'Nothing seems to change for a while. That is where the rock splits.',todo:['Watch 28.1','Play: Split the Rock'],game:'Split the Rock'},
+ {day:30,lbl:'Day 30',type:'finish',short:'30-Day Check-In',title:'30-Day Check-In Call',blurb:'Month one done. Review your capacity trend with a coach and set up Month 2: Integration.',todo:['Book your 30-day check-in','Take the monthly Nervous System assessment']}
+];
+const KCOL={start:'#4FD08A',finish:'#4FD08A',call:'#33BBFF',aid:'#F0655E',learn:'#B08CFF',hazard:'#F2B35D',milestone:'#E8B84A'};
+const KICON={start:'🏁',finish:'🏁',call:'📞',aid:'⛑',learn:'▶',hazard:'⚠',milestone:'⭐'};
+let curStop=STOPS.findIndex(x=>x.today);
+function pick(b){[...b.parentNode.children].forEach(x=>x.classList.toggle('on',x===b));}
+
+/* ── Time of day and moon phase (member's local clock) ── */
+let timeOverride=null; // 'dawn'|'day'|'dusk'|'night' for the demo control
+function timeOfDay(){ if(timeOverride)return timeOverride; const h=new Date().getHours()+new Date().getMinutes()/60; if(h>=5.5&&h<7.5)return 'dawn'; if(h>=7.5&&h<17.5)return 'day'; if(h>=17.5&&h<19.5)return 'dusk'; return 'night'; }
+function moonPhase(d=new Date()){ // 0=new, .25=first quarter, .5=full, .75=last quarter
+  const synodic=29.530588853; const ref=Date.UTC(2000,0,6,18,14); const days=(d.getTime()-ref)/864e5; let p=(days%synodic)/synodic; if(p<0)p+=1; return p; }
+function moonName(p){ return p<.03||p>.97?'New moon':p<.22?'Waxing crescent':p<.28?'First quarter':p<.47?'Waxing gibbous':p<.53?'Full moon':p<.72?'Waning gibbous':p<.78?'Last quarter':'Waning crescent'; }
+const SCENES={
+  night:{sky:['#0d1a2b','#0f2a2c','#102e22'],hillFar:'#12352a',hill:['#16422f','#0f2e22'],water:['#1b5f86','#123f5c'],treeA:'#2a7a4f',treeB:'#1d5a3b',treeA2:'#216642',treeB2:'#17492f',shoulder:'#d8cfb6',shoulderOp:.55,asphalt:['#262b33','#2f3540','#1d2128'],stars:true,label:'Night'},
+  day:{sky:['#1b3f6a','#3f8fc9','#9fd3f0'],hillFar:'#4a9a66',hill:['#6cbf7a','#4e9d5e'],water:['#5fb9e6','#3a93c8'],treeA:'#3f9a5e',treeB:'#2f7d4a',treeA2:'#35874f',treeB2:'#2a6e40',shoulder:'#f1e8d2',shoulderOp:.9,asphalt:['#474d58','#555c69','#3c414b'],stars:false,label:'Day'},
+  dawn:{sky:['#2b2f5c','#d9896a','#f7c58a'],hillFar:'#3f7a5a',hill:['#5aa36c','#3f8552'],water:['#8fc3e6','#5c9fcc'],treeA:'#3a8f58',treeB:'#2b7244',treeA2:'#317c4a',treeB2:'#25643c',shoulder:'#f3e4cd',shoulderOp:.85,asphalt:['#3c414c','#4a505c','#30353f'],stars:false,label:'Sunrise'},
+  dusk:{sky:['#1e2448','#b4546a','#f0a06a'],hillFar:'#2f5f48',hill:['#3f7f52','#2b5e3d'],water:['#6e88b8','#4a6594'],treeA:'#2f7a4c',treeB:'#23603a',treeA2:'#286a42',treeB2:'#1e5434',shoulder:'#e9d6bd',shoulderOp:.75,asphalt:['#343944','#414753','#2a2f38'],stars:false,label:'Sunset'}
+};
+function sceneLabel(){const t=timeOfDay();const now=new Date();const hhmm=now.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});return t==='night'?`${moonName(moonPhase())} · ${hhmm} where you are`:`${SCENES[t].label} · ${hhmm} where you are`;}
+function drawMap(){
+  const app=document.body.classList.contains('is-app');const W=app?360:640,H=app?1240:1060;$('#roadmap').setAttribute('viewBox',`0 0 ${W} ${H}`);const amp=app?64:W/2-240;
+  const SKY=app?96:110; // height of the sky strip; everything below is ground seen from above
+  const pts=STOPS.map((st,i)=>{const t=i/(STOPS.length-1);const y=SKY+44+t*(H-SKY-110);const x=W/2+Math.sin(t*Math.PI*1.5)*amp;return [x,y];});
+  let d='M'+pts[0].join(' ');for(let i=1;i<pts.length;i++){const [x0,y0]=pts[i-1],[x1,y1]=pts[i];const cy=(y0+y1)/2;d+=` C ${x0} ${cy}, ${x1} ${cy}, ${x1} ${y1}`;}
+  // road continues off the top and bottom edges so it reads as a stretch of a longer road
+  const [sx0,sy0]=pts[0],[ex,ey]=pts[pts.length-1];const dIn=`M${sx0} ${SKY-6} L${sx0} ${sy0}`;const dOut=`M${ex} ${ey} L${ex} ${H+6}`;
+  let seed=7;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
+  const T=timeOfDay(),SC=SCENES[T];const ph=moonPhase();
+  const G=T==='night'?{a:'#16392a',b:'#123120',c:'#1b4532',dark:'#0f2a1d',dirt:'#4a3b2a',rock:'#3a4652'}:T==='day'?{a:'#A9D98B',b:'#97CC79',c:'#BDE3A3',dark:'#86bd6a',dirt:'#b99a6e',rock:'#9aa4ad'}:T==='dawn'?{a:'#9fcf86',b:'#8dc274',c:'#b4dc9c',dark:'#7cb266',dirt:'#b3946b',rock:'#98a2ab'}:{a:'#7fb06f',b:'#6e9f5f',c:'#93bf82',dark:'#5f8f52',dirt:'#9c805d',rock:'#80888f'};
+  let svg=`<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SC.sky[0]}"/><stop offset=".6" stop-color="${SC.sky[1]}"/><stop offset="1" stop-color="${SC.sky[2]}"/></linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${SC.water[0]}"/><stop offset="1" stop-color="${SC.water[1]}"/></linearGradient>
+    <radialGradient id="moon"><stop offset="0" stop-color="#fff5d6"/><stop offset=".6" stop-color="#ffe9a8"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="sun"><stop offset="0" stop-color="#fff9e0"/><stop offset=".5" stop-color="#ffd978"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+    <clipPath id="moonclip"><circle cx="${W-70}" cy="48" r="16"/></clipPath>
+    <pattern id="grass" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="${G.a}"/><path d="M4 20l2-6 2 6M14 10l2-6 2 6M22 24l2-6 2 6M8 6l1.5-4 1.5 4" stroke="${G.b}" stroke-width="1.2" fill="none" stroke-linecap="round"/><circle cx="20" cy="6" r="1" fill="${G.c}"/><circle cx="6" cy="26" r=".8" fill="${G.c}"/></pattern>
+    <pattern id="asphalt" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="${SC.asphalt[0]}"/><circle cx="1.5" cy="1.5" r=".6" fill="${SC.asphalt[1]}"/><circle cx="4.5" cy="4" r=".6" fill="${SC.asphalt[2]}"/></pattern>
+  </defs>`;
+  // sky strip + horizon
+  svg+=`<rect width="${W}" height="${SKY}" fill="url(#sky)"/>`;
+  if(SC.stars){for(let i=0;i<40;i++){svg+=`<circle cx="${rnd()*W}" cy="${rnd()*SKY*0.8}" r="${0.6+rnd()*1.1}" fill="#fff" opacity="${0.3+rnd()*0.6}"/>`;}}else{for(let i=0;i<40;i++){rnd();rnd();rnd();rnd();}}
+  if(T==='night'){const mx=W-70,my=48,r=16;svg+=`<circle cx="${mx}" cy="${my}" r="38" fill="url(#moon)" opacity=".35"/><circle cx="${mx}" cy="${my}" r="${r}" fill="#fff3cf"/>`;const lit=ph<=.5?ph*2:(1-ph)*2;const dir=ph<=.5?-1:1;const off=dir*(lit*2*r);svg+=`<g clip-path="url(#moonclip)"><circle cx="${mx+off}" cy="${my}" r="${r+0.6}" fill="${SC.sky[0]}" opacity=".94"/></g><circle cx="${mx-5}" cy="${my-4}" r="2.2" fill="#e9dcb3" opacity=".35"/><circle cx="${mx+4}" cy="${my+5}" r="3" fill="#e9dcb3" opacity=".3"/>`;}
+  else{const sx=T==='dawn'?90:W-80,sy=T==='day'?44:SKY-22;svg+=`<circle cx="${sx}" cy="${sy}" r="${T==='day'?50:64}" fill="url(#sun)" opacity="${T==='day'?.6:.75}"/><circle cx="${sx}" cy="${sy}" r="${T==='day'?17:22}" fill="${T==='day'?'#fff6cc':'#ffd27a'}"/>`;for(let i=0;i<3;i++){const cx=40+rnd()*(W-80),cy=18+rnd()*(SKY*0.5),cw=50+rnd()*60;svg+=`<g opacity="${T==='day'?.9:.55}"><ellipse cx="${cx}" cy="${cy}" rx="${cw/2}" ry="8" fill="#fff"/><ellipse cx="${cx-cw/5}" cy="${cy-5}" rx="${cw/3.2}" ry="9" fill="#fff"/><ellipse cx="${cx+cw/5}" cy="${cy-3}" rx="${cw/3.6}" ry="7" fill="#fff"/></g>`;}}
+  // distant hills on the horizon
+  svg+=`<path d="M0 ${SKY-18} Q ${W*0.18} ${SKY-40} ${W*0.38} ${SKY-22} T ${W*0.72} ${SKY-30} T ${W} ${SKY-16} V ${SKY+4} H0 Z" fill="${G.dark}" opacity=".9"/>`;
+  svg+=`<path d="M0 ${SKY-8} Q ${W*0.3} ${SKY-26} ${W*0.55} ${SKY-10} T ${W} ${SKY-12} V ${SKY+4} H0 Z" fill="${G.b}"/>`;
+  // ground
+  svg+=`<rect x="0" y="${SKY}" width="${W}" height="${H-SKY}" fill="url(#grass)"/>`;
+  // darker grass patches and light meadow patches
+  for(let i=0;i<14;i++){const x=rnd()*W,y=SKY+rnd()*(H-SKY),rx=40+rnd()*90,ry=18+rnd()*40;svg+=`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${rnd()>0.5?G.dark:G.c}" opacity=".45"/>`;}
+  // lake at the bayou
+  const bi=STOPS.findIndex(x=>x.short==='Alligator Bayou');if(bi>0){const [bx,by]=pts[bi];const side=bx<W/2?1:-1;const lx=bx+side*(app?95:150);const rx=app?60:110,ry=app?28:46;svg+=`<ellipse cx="${lx}" cy="${by+22}" rx="${rx+8}" ry="${ry+7}" fill="${G.dirt}" opacity=".5"/><ellipse cx="${lx}" cy="${by+20}" rx="${rx}" ry="${ry}" fill="url(#water)"/><path d="M${lx-30} ${by+22} q8 -5 16 0 t16 0" stroke="#bfe6f7" stroke-width="1.5" fill="none" opacity=".6"/><path d="M${lx-10} ${by+34} q6 -4 12 0 t12 0" stroke="#bfe6f7" stroke-width="1.2" fill="none" opacity=".4"/><text x="${lx+(app?20:40)}" y="${by+26}" font-size="14">🐊</text>`;}
+  // trees, rocks, flowers off the road
+  const tree=(x,y,sz,dark)=>`<g transform="translate(${x} ${y}) scale(${sz})"><ellipse cx="2" cy="9" rx="9" ry="3" fill="#000" opacity=".18"/><rect x="-1.5" y="6" width="3" height="6" fill="#3b2a1a"/><path d="M0 -14 L8 0 H-8 Z" fill="${dark?SC.treeB:SC.treeA}"/><path d="M0 -8 L9.5 6 H-9.5 Z" fill="${dark?SC.treeB2:SC.treeA2}"/></g>`;
+  const bush=(x,y,sz)=>`<g transform="translate(${x} ${y}) scale(${sz})"><ellipse cx="0" cy="4" rx="9" ry="2.5" fill="#000" opacity=".15"/><circle cx="-5" cy="0" r="5" fill="${SC.treeA2}"/><circle cx="4" cy="-1" r="6" fill="${SC.treeA}"/><circle cx="0" cy="3" r="5" fill="${SC.treeB}"/></g>`;
+  const rock=(x,y,sz)=>`<g transform="translate(${x} ${y}) scale(${sz})"><path d="M-8 4 L-5 -4 L2 -6 L8 -1 L7 5 Z" fill="${G.rock}"/><path d="M-5 -4 L2 -6 L8 -1 L1 -1 Z" fill="#fff" opacity=".18"/></g>`;
+  const offRoad=(x,y)=>{for(const [px,py] of pts){if(Math.hypot(px-x,py-y)<58)return false;}let md=1e9;for(let i=1;i<pts.length;i++){const [x0,y0]=pts[i-1],[x1,y1]=pts[i];const t=Math.max(0,Math.min(1,((x-x0)*(x1-x0)+(y-y0)*(y1-y0))/((x1-x0)**2+(y1-y0)**2)));const dx=x0+t*(x1-x0)-x,dy=y0+t*(y1-y0)-y;md=Math.min(md,Math.hypot(dx,dy));}return md>42;};
+  let placed=0,tries=0;while(placed<(app?46:80)&&tries<800){tries++;const x=16+rnd()*(W-32),y=SKY+20+rnd()*(H-SKY-40);if(offRoad(x,y)){const k=rnd();svg+=k<0.6?tree(x,y,0.8+rnd()*0.8,rnd()>0.5):k<0.85?bush(x,y,0.7+rnd()*0.6):rock(x,y,0.7+rnd()*0.8);placed++;}}
+  if(T!=='night'){for(let i=0;i<30;i++){const x=rnd()*W,y=SKY+rnd()*(H-SKY);if(offRoad(x,y))svg+=`<circle cx="${x}" cy="${y}" r="1.6" fill="${rnd()>0.5?'#ffd447':'#ff8fb0'}" opacity=".85"/>`;}}
+  // road: dirt verge, light shoulder, asphalt, edge lines, center dash; extends off both edges
+  for(const path of [dIn,d,dOut]){
+    svg+=`<path d="${path}" stroke="${G.dirt}" stroke-width="48" fill="none" stroke-linecap="butt" opacity=".55"/>`;
+  }
+  for(const path of [dIn,d,dOut]){svg+=`<path d="${path}" stroke="${SC.shoulder}" stroke-width="38" fill="none" stroke-linecap="butt" opacity="${SC.shoulderOp}"/>`;}
+  for(const path of [dIn,d,dOut]){svg+=`<path d="${path}" stroke="url(#asphalt)" stroke-width="30" fill="none" stroke-linecap="butt"/>`;}
+  for(const path of [dIn,d,dOut]){svg+=`<path d="${path}" stroke="#FFD447" stroke-width="2.4" stroke-dasharray="12 12" fill="none" stroke-linecap="round"/>`;}
+  // driven portion
+  const ti=STOPS.findIndex(x=>x.today);
+  svg+=`<path d="${d}" stroke="#33BBFF" stroke-width="30" fill="none" stroke-linecap="round" opacity=".14" pathLength="100" stroke-dasharray="${(ti/(STOPS.length-1))*100} 100"/>`;
+  // stops with signposts
+  const signText=T==='night'?'#fff':'#fff';
+  STOPS.forEach((st,i)=>{const [x,y]=pts[i];const c=KCOL[st.type];const done=st.done;const today=st.today;const fut=!done&&!today;const side=x<W/2?1:-1;
+    svg+=`<g class="mstop" style="cursor:pointer" onclick="setStop(${i})">`;
+    const px=x+side*26;svg+=`<ellipse cx="${px}" cy="${y+17}" rx="5" ry="2" fill="#000" opacity=".25"/><line x1="${px}" y1="${y-2}" x2="${px}" y2="${y+16}" stroke="#8a6a44" stroke-width="2.5"/>`;
+    const lw=(st.short.length*6.8)+18;const sxx=side>0?px:px-lw;
+    svg+=`<rect x="${sxx}" y="${y-30}" width="${lw}" height="30" rx="6" fill="${today?'#33BBFF':fut?'#1a2430':'#2a3442'}" stroke="${today?'#8fdcff':c}" stroke-width="${today?2:1.2}" stroke-opacity="${fut?.6:1}"/>`;
+    svg+=`<text x="${sxx+9}" y="${y-19}" font-size="8" font-weight="700" letter-spacing=".08em" fill="${today?'#06202e':'rgba(255,255,255,.6)'}" font-family="Montserrat,sans-serif">${st.lbl.toUpperCase()}</text>`;
+    svg+=`<text x="${sxx+9}" y="${y-7}" font-size="11" font-weight="700" fill="${today?'#06202e':fut?'rgba(255,255,255,.7)':signText}" font-family="Montserrat,sans-serif">${st.short}</text>`;
+    if(today)svg+=`<circle cx="${x}" cy="${y}" r="24" fill="none" stroke="#33BBFF" stroke-width="3" filter="url(#glow)"><animate attributeName="r" values="22;28;22" dur="2.4s" repeatCount="indefinite"/></circle>`;
+    svg+=`<circle cx="${x}" cy="${y}" r="16" fill="${fut?'#111820':c}" stroke="#fff" stroke-width="${today?3:2}" stroke-opacity="${fut?.5:.95}"/>`;
+    svg+=`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="13" fill="${fut?c:'#0a0e14'}" font-weight="800" fill-opacity="${fut?.7:1}">${done?'✓':KICON[st.type]}</text>`;
+    svg+=`</g>`;
+    if(today){const [ax,ay]=pts[i-1]||[x,y-60];const cx=x+(ax-x)*0.42,cy=y+(ay-y)*0.42;const ang=Math.atan2(y-ay,x-ax)*180/Math.PI+90;
+      svg+=`<g transform="translate(${cx} ${cy}) rotate(${ang})"><ellipse cx="0" cy="2" rx="12" ry="18" fill="#000" opacity=".35" filter="url(#soft)"/><rect x="-9" y="-16" width="18" height="32" rx="6" fill="#FF6B57" stroke="#2b1511" stroke-width="1.2"/><rect x="-7" y="-9" width="14" height="9" rx="2.5" fill="#bfe9ff" opacity=".9"/><rect x="-7" y="4" width="14" height="7" rx="2.5" fill="#bfe9ff" opacity=".7"/><rect x="-8" y="-17" width="4" height="3" rx="1" fill="#fff7c2"/><rect x="4" y="-17" width="4" height="3" rx="1" fill="#fff7c2"/><rect x="-8" y="14" width="4" height="2.5" rx="1" fill="#ff3b3b"/><rect x="4" y="14" width="4" height="2.5" rx="1" fill="#ff3b3b"/></g>`;}
+  });
+  const [fx,fy]=pts[pts.length-1];svg+=`<rect x="${fx-62}" y="${fy+26}" width="124" height="20" rx="4" fill="#0a0e14" opacity=".7"/><text x="${fx}" y="${fy+40}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing=".12em" fill="#4FD08A" font-family="Montserrat,sans-serif">MONTH 2: INTEGRATION ▸</text>`;
+  svg+=`<rect x="${pts[0][0]-26}" y="${pts[0][1]-48}" width="52" height="18" rx="4" fill="#0a0e14" opacity=".7"/><text x="${pts[0][0]}" y="${pts[0][1]-35}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing=".12em" fill="#fff" font-family="Montserrat,sans-serif">START</text>`;
+  $('#roadmap').innerHTML=svg;
+  const lb=$('#sceneLbl');if(lb)lb.textContent=sceneLabel()+(timeOverride?' (preview)':'');
+}
+function setStop(i){curStop=i;const st=STOPS[i];
+  $('#stopCard').innerHTML=`<span class="kind k-${st.type}">${KICON[st.type]} ${st.type==='aid'?'Aid station':st.type==='hazard'?'Bump in the road':st.type==='learn'?'Learning stop':st.type==='call'?'Live call':st.type==='milestone'?'Milestone':'Checkpoint'} · ${st.lbl}</span><h3>${st.title}</h3><p class="body" style="font-size:13px">${st.blurb}</p><ul>${st.todo.map((t,j)=>`<li class="${st.done?'done':''}"><span class="cb">${st.done?'✓':''}</span>${t}</li>`).join('')}</ul><div style="display:flex;gap:8px;flex-wrap:wrap">${st.type==='call'||st.type==='aid'?'<button class="btn sm" onclick="setTab(\'calendar\')">See calls</button>':'<button class="btn sm" onclick="setTab(\'classroom\')">Open lesson</button>'}${st.game?`<button class="btn sm ${st.today?'':'ghost'}" onclick="toast('${st.game}: 5 rounds, about 3 minutes. Finishing it completes this stop.')">🎮 Play ${st.game}</button>`:''}${st.today?'<button class="btn sm outline" onclick="toast(\'Stop marked done · car moves to Day 12\')">Mark done</button>':''}</div>`;
+  $('#stopsList').innerHTML=STOPS.map((x,j)=>`<button class="${j===i?'on':''} ${x.done?'done':''}" onclick="setStop(${j})"><span class="dot" style="background:${KCOL[x.type]};opacity:${x.done||x.today?1:.4}"></span><span class="d">${x.lbl}</span>${x.short}${x.today?' <span class="tier acad" style="margin-left:auto">today</span>':x.done?' <span style="margin-left:auto;color:var(--good)">✓</span>':''}</button>`).join('');
+}
+drawMap();setStop(curStop);
+
+function setScene(t){timeOverride=t;drawMap();}
+setInterval(()=>{if(!timeOverride&&$('#roadmap'))drawMap();},60000);
+/* ── App mode ── */
+let phoneForced=false;
+function isApp(){return phoneForced||window.innerWidth<=720;}
+function applyAppMode(){
+  const on=isApp();document.body.classList.toggle('is-app',on);
+  const root=$('#appRoot');root.classList.toggle('phone-shell',phoneForced&&window.innerWidth>720);
+  $('#phoneBtn').classList.toggle('on',phoneForced);
+  let note=$('#phoneNote');
+  if(phoneForced&&window.innerWidth>720){if(!note){note=document.createElement('div');note.id='phoneNote';note.className='phone-note';note.textContent='Phone / app view · what members see in the installed app';root.parentNode.insertBefore(note,root);}}else if(note)note.remove();
+  renderBottomBar();if(typeof drawMap==='function')drawMap();
+}
+function togglePhone(){phoneForced=!phoneForced;applyAppMode();if(tab==='admin'||tab==='training')setTab('community');}
+function renderBottomBar(){
+  const r=ROLES[role];const plat=r.plat&&!r.staff;
+  const items=ROLES[role].caregiver?[]:ROLES[role].path?[['path','🛣','Path'],['community','🏠','Community']]:[['community','🏠','Home']];items.push(['classroom','🎓','Classroom'],['calendar','📅','Calendar']);
+  if(r.chat)items.push(['chat','💬',r.staff?'Inbox':'Coach']);
+  if(!r.caregiver)items.push([plat?'profile':'progress','👤',plat?'Profile':'Progress']);
+  items.push(['more','☰','More']);
+  $('#bottombar').innerHTML=items.map(([t,ic,l])=>`<button class="${(tab===t||(t==='more'&&['settings','admin','training'].includes(tab)))?'on':''} ${t==='chat'&&plat?'plat':''}" onclick="${t==='more'?'openSheet()':`setTab('${t}')`}"><span class="ic">${ic}</span>${l}</button>`).join('');
+}
+function openSheet(){const r=ROLES[role];let h='<div class="grab"></div>';
+  h+=`<button onclick="setTab('settings');closeSheet()">⚙️ Account Settings<span class="sub">${r.plan[0]}</span></button>`;
+  h+=`<button onclick="toast('Notifications inbox');closeSheet()">🔔 Notifications<span class="sub">9 new</span></button>`;
+  h+=`<button onclick="toast('Search');closeSheet()">🔍 Search</button>`;
+  if(r.staff){h+=`<button onclick="setTab('admin');closeSheet()">🛠 Admin</button><button onclick="setTab('training');closeSheet()">📚 Internal Training</button>`;}
+  h+=`<button onclick="toast('Install: Add to Home Screen (iOS) / Install app (Android). Native app in Phase 3.');closeSheet()">📲 Install the app<span class="sub">PWA now · App Store Phase 3</span></button>`;
+  $('#sheet').innerHTML=h;$('#sheet').classList.add('show');$('#scrim').classList.add('show');}
+function closeSheet(){$('#sheet').classList.remove('show');$('#scrim').classList.remove('show');}
+function showConv(){$('#chatList').classList.add('hide');$('#conv').classList.add('show');}
+function showThreadList(){$('#chatList').classList.remove('hide');$('#conv').classList.remove('show');}
+document.addEventListener('click',e=>{const t=e.target.closest('.thread');if(t&&document.body.classList.contains('is-app')){document.querySelectorAll('.thread').forEach(x=>x.classList.toggle('on',x===t));showConv();}});
+window.addEventListener('resize',applyAppMode);
+const TABS=['feedback','path','community','classroom','calendar','chat','profile','progress','training','settings','admin'];
+function setTab(t){tab=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));TABS.forEach(id=>$('#'+id).classList.toggle('hidden',id!==t));if(t==='chat'&&document.body.classList.contains('is-app'))showThreadList();renderBottomBar();window.scrollTo({top:0});}
+document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-set]').forEach(x=>x.classList.toggle('on',x===b));['membership','benefits','programs','profile','notif','access','agreement','support','cancel'].forEach(k=>$('#set-'+k).classList.toggle('hidden',k!==b.dataset.set));}));
+function showLesson(on){$('#lessonView').classList.toggle('hidden',!on);$('#courses').classList.toggle('hidden',on);}
+document.querySelectorAll('#who .pill[data-role]').forEach(b=>b.addEventListener('click',()=>{role=b.dataset.role;window._userTabbed=false;document.querySelectorAll('#who .pill').forEach(x=>x.classList.toggle('on',x===b));render();toast('Viewing as '+ROLES[role].name+' · '+ROLES[role].label);}));
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{window._userTabbed=true;setTab(b.dataset.tab)}));
+document.querySelectorAll('[data-adm]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-adm]').forEach(x=>x.classList.toggle('on',x===b));['over','members','billing','att','coach'].forEach(k=>$('#adm-'+k).classList.toggle('hidden',k!==b.dataset.adm));}));
+render();applyAppMode();setTab(ROLES[role].path?'path':ROLES[role].caregiver?'classroom':'community');
+
+
+/* ── Feedback mode: pin notes to elements, shared via the artifact db or Supabase ── */
+let fbOn=false,fbDb=null,fbUser=null,fbMe=null,fbNotes=[],fbPop=null,fbSel=null,fbSheet=null;
+let fbDevice='';try{fbDevice=localStorage.getItem('fbDevice')||'';if(!fbDevice){fbDevice='d_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('fbDevice',fbDevice);}}catch(e){fbDevice='d_'+Date.now();}
+const FB_TARGETS='.card, .tab, .btn, .chip, .pill:not(#fbBtn):not(#fbListBtn), .thread, .folder, .game, .course, .kpi, .post, .ev-card, .stop-card, .checkin, .gauge, .lowenergy, .path-hero, .map, .stops-list, .bottombar button, .srow, .tcard, .kv div, .toc .li, .composer, .next, #roadmap .mstop, .quote, .sheet button';
+function fbLabel(el){
+  const t=(el.querySelector('h1,h2,h3,b,.nm,.name,.lbl,.eyebrow')||el).textContent.trim().replace(/\s+/g,' ').slice(0,60);
+  const sec=el.closest('section.page');const screen=sec?sec.id:'page';
+  return {screen,label:t||el.className.split(' ')[0]};
+}
+function fbKey(el){ // stable-ish key: screen + label + nth of same label
+  const {screen,label}=fbLabel(el);const same=[...document.querySelectorAll(FB_TARGETS)].filter(e=>fbLabel(e).label===label&&(e.closest('section.page')||{}).id===screen);
+  return screen+'|'+label+'|'+same.indexOf(el);
+}
+function fbFind(key){const [screen,label,n]=key.split('|');const sec=document.getElementById(screen);if(!sec)return null;const same=[...sec.querySelectorAll(FB_TARGETS)].filter(e=>fbLabel(e).label===label);return same[+n]||null;}
+async function fbInit(){
+  if(SHEET_API_URL){
+    fbSheet={url:SHEET_API_URL};
+    const load=async()=>{try{const r=await fetch(fbSheet.url);if(r.ok){const j=await r.json();if(j.ok){fbNotes=(j.notes||[]).map(x=>({id:x.id,key:x.key,screen:x.screen,label:x.label,role:x.role,kind:x.kind,text:x.text,name:x.name,at:x.created_at,device:x.device}));fbRender();}}}catch(e){}};
+    fbSheet.load=load;await load();setInterval(load,20000);
+    return;
+  }
+  try{fbDb=await claude.use('db');fbUser=await claude.use('user');if(fbUser){const me=await fbUser.me();fbMe=me&&me.id;}}catch(e){fbDb=null}
+  if(fbDb){try{fbDb.collection('feedback').onSnapshot(snap=>{fbNotes=[];snap.forEach(d=>fbNotes.push({id:d.id,...d.data()}));fbRender();});}catch(e){}}
+  else{try{fbNotes=JSON.parse(localStorage.getItem('fbNotes')||'[]');}catch(e){fbNotes=[]}fbRender();}
+}
+function fbSave(note){
+  if(fbSheet){return fetch(fbSheet.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'add',key:note.key,screen:note.screen,label:note.label,role:note.role,kind:note.kind,text:note.text,name:note.name,device:fbDevice})}).then(r=>r.json()).then(j=>{if(!j.ok)throw 0;toast('Note saved · everyone with the link can see it');fbSheet.load();}).catch(()=>toast('Could not save the note. Check the Sheet URL.'));}
+  if(fbDb&&fbMe){const id=fbMe+'_'+Date.now();return fbDb.collection('feedback').doc(id).set(note).then(()=>toast('Note saved · everyone with the link can see it')).catch(()=>{toast('Could not save (sign in to the link to leave notes)');});}
+  note.id='local_'+Date.now();fbNotes.push(note);try{localStorage.setItem('fbNotes',JSON.stringify(fbNotes));}catch(e){}fbRender();toast('Note saved on this device');
+}
+function fbDelete(id){
+  if(fbSheet){fetch(fbSheet.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete',id,device:fbDevice})}).then(r=>r.json()).then(j=>{if(!j.ok)toast('Only the person who wrote a note can remove it');fbSheet.load();}).catch(()=>{});return;}
+  if(fbDb&&!id.startsWith('local_')){fbDb.collection('feedback').doc(id).delete().catch(()=>toast('Only the author or Preston can remove a note'));return;}
+  fbNotes=fbNotes.filter(n=>n.id!==id);try{localStorage.setItem('fbNotes',JSON.stringify(fbNotes));}catch(e){}fbRender();
+}
+function toggleFb(force){fbOn=force===true?true:!fbOn;document.body.classList.toggle('fb-mode',fbOn);$('#fbBtn').classList.toggle('on',fbOn);document.querySelectorAll(FB_TARGETS).forEach(e=>e.classList.toggle('fb-target',fbOn));if(!fbOn)fbClosePop();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(fbPop)fbClosePop();else if(fbOn)toggleFb();}});
+document.addEventListener('click',e=>{
+  if(!fbOn)return;if(e.target.closest('.fb-pop,.fb-pin,#fbBtn,#fbListBtn,.demo'))return;
+  const el=e.target.closest(FB_TARGETS);if(!el)return;
+  e.preventDefault();e.stopPropagation();fbOpen(el,e);
+},true);
+function fbOpen(el,ev){
+  fbClosePop();fbSel=el;const key=fbKey(el);const {screen,label}=fbLabel(el);const existing=fbNotes.filter(n=>n.key===key);
+  const pop=document.createElement('div');pop.className='fb-pop';fbPop=pop;
+  const r=el.getBoundingClientRect();let left=Math.min(window.innerWidth-356,Math.max(16,r.right+12));let top=Math.max(16,Math.min(window.innerHeight-320,r.top));if(r.right+360>window.innerWidth)left=Math.max(16,r.left-352);
+  pop.style.left=left+'px';pop.style.top=top+'px';
+  const names={path:'Recovery Path',community:'Community',classroom:'Classroom',calendar:'Calendar',chat:'Coach chat',profile:'My Profile',progress:'My Progress',settings:'Account Settings',admin:'Admin',training:'Internal Training',feedback:'Feedback'};
+  pop.innerHTML=`<div class="what">${names[screen]||screen} · viewing as ${ROLES[role].label}<b>${label}</b></div>
+    ${existing.length?`<div class="fb-thread">${existing.map(n=>fbItem(n,false)).join('')}</div>`:''}
+    <div class="fb-kinds"><button class="love" data-k="love">👍 Love it</button><button class="change on" data-k="change">✏️ Change it</button><button class="q" data-k="q">❓ Question</button></div>
+    <textarea id="fbText" placeholder="What would you change, or what works?"></textarea>
+    <input id="fbName" placeholder="Your name" value="${localStorage.getItem('fbName')||''}">
+    <div class="row"><button class="btn sm ghost" onclick="fbClosePop()">Cancel</button><button class="btn sm gold" id="fbSend">Save note</button></div>`;
+  document.body.appendChild(pop);
+  let kind='change';pop.querySelectorAll('.fb-kinds button').forEach(b=>b.addEventListener('click',()=>{kind=b.dataset.k;pop.querySelectorAll('.fb-kinds button').forEach(x=>x.classList.toggle('on',x===b));}));
+  pop.querySelector('#fbSend').addEventListener('click',()=>{const text=pop.querySelector('#fbText').value.trim();const name=pop.querySelector('#fbName').value.trim()||'Anonymous';if(!text){toast('Write a note first');return;}try{localStorage.setItem('fbName',name);}catch(e){}
+    fbSave({key,screen,label,role:ROLES[role].label,kind,text,name,at:new Date().toISOString()});fbClosePop();});
+  pop.querySelector('#fbText').focus();
+}
+function fbClosePop(){if(fbPop){fbPop.remove();fbPop=null;}}
+function fbItem(n,link){return `<div class="fb-item" ${link?`onclick="fbJump('${n.id}')"`:''}><div class="meta"><span class="k ${n.kind}">${n.kind==='love'?'Love it':n.kind==='change'?'Change it':'Question'}</span><span>${n.name}</span><span>· as ${n.role}</span><span>· ${new Date(n.at).toLocaleDateString([], {month:'short',day:'numeric'})}</span>${(fbSheet&&n.device===fbDevice)||(fbMe&&n.id.startsWith(fbMe))||n.id.startsWith('local_')||(fbUser&&fbUser.isOwner&&fbUser.isOwner())?`<button class="del" onclick="event.stopPropagation();fbDelete('${n.id}')">remove</button>`:''}</div><div>${n.text.replace(/</g,'&lt;')}</div></div>`;}
+function fbRender(){
+  $('#fbCount').textContent=fbNotes.length;
+  const names={path:'Recovery Path',community:'Community',classroom:'Classroom',calendar:'Calendar',chat:'Coach chat',profile:'My Profile',progress:'My Progress',settings:'Account Settings',admin:'Admin',training:'Internal Training'};
+  const groups={};fbNotes.slice().sort((a,b)=>a.at<b.at?1:-1).forEach(n=>{(groups[n.screen]=groups[n.screen]||[]).push(n);});
+  const panel=$('#fbPanel');if(!fbNotes.length){panel.innerHTML='<div class="fb-empty">No notes yet. Turn on Feedback and click anything in the demo.</div>';}
+  else{const counts={love:0,change:0,q:0};fbNotes.forEach(n=>counts[n.kind]++);panel.innerHTML=`<div class="chips"><span class="chip" style="color:var(--good)">👍 ${counts.love} love it</span><span class="chip" style="color:var(--gold)">✏️ ${counts.change} change it</span><span class="chip" style="color:var(--cyan)">❓ ${counts.q} questions</span></div>`+Object.keys(groups).map(k=>`<div class="fb-group"><h3>${names[k]||k} <span class="n">${groups[k].length}</span></h3>${groups[k].map(n=>fbItem(n,true)).join('')}</div>`).join('');}
+  fbPins();
+}
+function fbPins(){
+  document.querySelectorAll('.fb-pin').forEach(p=>p.remove());
+  const byKey={};fbNotes.forEach(n=>{(byKey[n.key]=byKey[n.key]||[]).push(n);});
+  Object.keys(byKey).forEach(k=>{const el=fbFind(k);if(!el||el.closest('.hidden'))return;const r=el.getBoundingClientRect();if(!r.width)return;const pin=document.createElement('div');const last=byKey[k][0];pin.className='fb-pin '+last.kind;pin.textContent=byKey[k].length;pin.title=byKey[k].map(n=>n.name+': '+n.text).join('\n');pin.style.left=(r.right+window.scrollX-12)+'px';pin.style.top=(r.top+window.scrollY-10)+'px';pin.addEventListener('click',e=>{e.stopPropagation();if(!fbOn)toggleFb(true);fbOpen(el,e);});document.body.appendChild(pin);});
+}
+function fbJump(id){const n=fbNotes.find(x=>x.id===id);if(!n)return;const need={admin:'staff',training:'staff',chat:'platinum',profile:'platinum',path:'academy'}[n.screen];if(need&&!(ROLES[role].staff)&&role!==need){role=need;document.querySelectorAll('#who .pill').forEach(x=>x.classList.toggle('on',x.dataset.role===need));render();}
+  setTab(n.screen);setTimeout(()=>{const el=fbFind(n.key);if(el){el.scrollIntoView({block:'center'});toggleFb(true);fbOpen(el,{});}},80);}
+window.addEventListener('resize',fbPins);window.addEventListener('scroll',()=>{},{passive:true});
+const _setTab=setTab;setTab=function(t){_setTab(t);setTimeout(fbPins,50);if(fbOn)document.querySelectorAll(FB_TARGETS).forEach(e=>e.classList.add('fb-target'));};
+fbInit();
+
+const h=(location.hash||'').slice(1);
+if(TABS.includes(h)){const need=(h==='admin'||h==='training')?'staff':(h==='chat'||h==='profile')?'platinum':null;if(need){role=need;document.querySelectorAll('#who .pill').forEach(x=>x.classList.toggle('on',x.dataset.role===need));render();}setTab(h);}
+</script>
+</body>
+</html>
