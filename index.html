@@ -896,7 +896,7 @@ grant(member, plan→tier, source="whop", until=renews_at)
    Follow the setup at the top of Code.gs, then paste the Web app URL
    (ends in /exec) between the quotes. Blank = notes save per device only.
    ════════════════════════════════════════════════════════════════ */
-const SHEET_API_URL='https://script.google.com/a/macros/cfsrecovery.co/s/AKfycby5x5xQ-xD40V7TaJ4WOkZf7xvFTFY0rmw2KYEybjNsTu0pVCsOdlzH2mqTOPAGkTx4jQ/exec';
+const SHEET_API_URL='https://script.google.com/macros/s/AKfycby5x5xQ-xD40V7TaJ4WOkZf7xvFTFY0rmw2KYEybjNsTu0pVCsOdlzH2mqTOPAGkTx4jQ/exec';
 
 const ROLES={
   foundations:{name:'Navina Heise',av:'NH',label:'Foundations',spaces:['Foundations'],plat:false,staff:false,side:['Foundations','Free community for anyone starting to understand ME/CFS and Long Covid recovery.'],plan:['Foundations','Free','Active','Start a 7-day School trial']},
@@ -1237,7 +1237,7 @@ async function fbInit(){
     fbSheet={url:SHEET_API_URL};
     const load=async()=>{try{const r=await fetch(fbSheet.url,{redirect:'follow'});if(r.ok){const j=await r.json();if(j.ok){fbSheet.ok=true;fbNotes=(j.notes||[]).map(x=>({id:x.id,key:x.key,screen:x.screen,label:x.label,role:x.role,kind:x.kind,text:x.text,name:x.name,at:x.created_at,device:x.device}));fbRender();}}}catch(e){}};
     fbSheet.load=load;await load();setInterval(load,20000);
-    if(!fbSheet.ok){fbSheet.warned=true;setTimeout(()=>toast('Feedback sheet needs a cfsrecovery.co Google sign-in in this browser'),1500);}
+    if(!fbSheet.ok){fbSheet.warned=true;setTimeout(()=>toast('Could not reach the feedback sheet. Check the Apps Script deployment is set to Anyone.'),1500);}
     return;
   }
   try{fbDb=await claude.use('db');fbUser=await claude.use('user');if(fbUser){const me=await fbUser.me();fbMe=me&&me.id;}}catch(e){fbDb=null}
