@@ -12,7 +12,7 @@ Miguel and Preston edit this folder for the Thriver Companion onboarding demo.
 | Screen behavior | [onboarding.js](onboarding.js) |
 | Member quotes | [member-stories.js](member-stories.js) |
 
-Open a file on GitHub, select the pencil, make your edit, and choose **Commit changes**. Refresh the file before starting another edit so you see your teammate’s latest version.
+Open a file on GitHub, select the pencil, make your edit, and choose **Commit changes**. Changes saved to the main branch publish automatically through Preston’s existing App-Demo deployment. Refresh the file before starting another edit so you see your teammate’s latest version.
 
 [Try the demo](https://thriver-companion-demo.vercel.app/) or [jump to a screen](https://thriver-companion-demo.vercel.app/review.html). Use made-up answers.
 
