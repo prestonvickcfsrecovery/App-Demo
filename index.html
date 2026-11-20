@@ -761,6 +761,7 @@ body.is-app{font-size:16px}
     <button class="tab" data-tab="calendar">Calls</button>
     <button class="tab" data-tab="community">Community</button>
     <button class="tab" data-tab="classroom">Education</button>
+    <button class="tab" data-tab="chat" id="tabCoach">Coach</button>
   </nav>
 </header>
 
@@ -1235,6 +1236,7 @@ function render(){
   $('#profName').textContent=r.name;
   // Top menu is three tabs: Home, Calls, Community. Everything else sits under the profile icon.
   document.querySelector('[data-tab=community]').classList.toggle('hidden',!!r.caregiver);
+  {const tc=document.getElementById('tabCoach');tc.classList.toggle('hidden',!r.chat);tc.textContent=r.staff?'Inbox':'Coach';if(!r.chat&&tab==='chat')setTab('path');}
   document.body.classList.toggle('is-caregiver',!!r.caregiver);
   document.querySelector('[data-set=programs]').classList.toggle('hidden',!!r.caregiver);
   $('#setPlan').textContent=r.plan[0];$('#setPrice').textContent=r.plan[1];$('#setStatus').textContent=r.plan[2];$('#setUp').textContent=r.plan[3];$('#setName').textContent=r.name;
