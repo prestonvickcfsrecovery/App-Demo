@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>Thriver Companion · Shared onboarding</title>
+<style>
+:root{font:16px/1.5 "DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#183748;background:#f1f6f9}
+*{box-sizing:border-box}body{margin:0}button,a,select{font:inherit}button,select,a{cursor:pointer}a{color:#065f86;text-underline-offset:3px}
+.shell{max-width:1490px;margin:auto;min-height:100vh;display:grid;grid-template-columns:minmax(285px,350px) 1fr}
+aside{padding:clamp(22px,3.5vw,58px) clamp(20px,2.7vw,42px);background:#fff;box-shadow:1px 0 #d9e5ec}
+h1{font:400 clamp(34px,3vw,46px)/1.05 Georgia,serif;letter-spacing:-.045em;margin:0 0 14px;text-wrap:balance}
+aside p{color:#425f70;line-height:1.5;margin:0 0 20px}
+.direct{margin:20px 0;padding:16px 0;border-block:1px solid #dfebf0;display:grid;gap:7px}
+.direct label{font-weight:650}
+select{color:#183748;background:#f5faff;border:1px solid #b8d1df;padding:10px;font-size:1rem;border-radius:10px;min-width:0;width:100%;min-height:46px}
+.navigation{display:flex;gap:8px;margin-top:3px}
+.navigation button{min-height:44px;padding:8px 10px;background:white;border:1px solid #bdd2df;color:#155c7c;border-radius:9px;flex:1}
+button:disabled{opacity:.45;cursor:default}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #0076ab;outline-offset:3px}
+.jump{display:block;width:100%;padding:9px 2px;color:#205975;text-decoration:none;min-height:44px}
+.jump:hover,.jump:focus-visible{text-decoration:underline}
+details{margin:12px 0}
+summary{color:#1c536e;font-weight:650;cursor:pointer;min-height:44px;padding-top:9px}
+ol{color:#415e70;margin:0;padding-inline-start:1.3rem}li{margin-block:9px}section.preview{min-width:0;padding:16px;display:flex;align-items:center;justify-content:center}
+.frame{width:min(100%,412px);height:min(calc(100dvh - 32px),900px);min-height:360px;display:block;border:1px solid #afcad9;border-radius:27px;overflow:hidden;box-shadow:0 18px 50px #174f6d15;background:white}
+@media(max-width:740px){.shell{display:flex;flex-direction:column}aside{padding:15px 18px 12px;box-shadow:0 1px #d9e5ec}h1{font-size:28px;margin:0 0 5px}aside p,.extras,.navigation{display:none}.direct{margin:0;padding:4px 0 0;border:0}.direct label{font-size:.9rem}.preview{padding:0!important}.frame{border:0;border-radius:0;box-shadow:none;width:100%;height:calc(100dvh - 119px);min-height:370px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+.tour-modes{border:0;display:flex;gap:3px;min-width:0;padding:4px;border-radius:12px;background:#edf4f8;margin:0 0 10px}
+.tour-modes legend{position:absolute;clip-path:inset(100%);width:1px;height:1px;overflow:hidden}
+.tour-modes label{position:relative;display:grid;place-items:center;min-height:42px;flex:1;min-width:0;border-radius:9px;font-size:.94rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.tour-modes label:has(:checked){background:#fff;box-shadow:0 1px 5px #1a4e6520;color:#055777;font-weight:650}
+.tour-modes label:focus-within{outline:2px solid #08709a}.tour-modes input{position:absolute;opacity:0}
+#beat{color:#3a6076;font-size:.95rem;margin:5px 0}.direct{margin-bottom:10px}
+aside .jump{color:#115974}.navigation #next{background:#006c96;border-color:#006c96;color:#fff}
+@media(max-width:740px){
+ aside{padding:6px 12px}.shell{height:100dvh;min-height:420px}
+ aside h1{font:600 1rem/1.3 'DM Sans',sans-serif;letter-spacing:0;margin:0}
+ .direct{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 7px;margin:0}
+ .tour-modes{grid-column:1/-1;max-width:280px;margin:0;padding:1px}.tour-modes label{min-height:34px}
+ .direct>label{position:absolute;clip-path:inset(100%)}
+ .navigation{display:flex;margin:0;gap:4px}.navigation button{min-height:44px;font-size:.89rem;padding-inline:8px}
+ .navigation #previous{display:none}#beat{display:none}select{min-height:44px;padding:6px 3px}
+ section.preview{min-height:0;flex:1}.frame{flex:1;height:100%;min-height:0}}
+.restart-flow{display:inline-block;color:#075f84;padding:6px 0 12px;font-weight:600;text-underline-offset:3px}@media(max-width:740px){.restart-flow{padding:4px 0;font-size:.92rem}}
+</style></head><body>
+<main class="shell"><aside>
+<h1>Shared onboarding</h1><p>Answer in the phone to follow a member through onboarding. Their first answer shapes the opening lesson. Their goal near the end selects five member quotes.</p>
+<a class="restart-flow" href="review.html">Replay the opening</a>
+<div class="direct">
+<fieldset class="tour-modes"><legend>Walkthrough mode</legend>
+<label><input type="radio" name="mode" value="highlights">Highlights</label>
+<label><input type="radio" name="mode" value="all" checked>Every screen</label></fieldset>
+<label for="screen">Jump to a screen</label><select id="screen"><option>Opening wireframes…</option></select>
+<p class="stage-description" id="beat" aria-live="polite"></p>
+<div class="navigation"><button id="previous" type="button">Previous</button><button id="next" type="button">Next screen</button></div></div>
+<div class="extras">
+<details id="screen-purpose"><summary>Why this slide is here</summary><p id="purpose-text"></p></details>
+<a class="jump" href="slide-guide.html">Read the guide to every slide</a>
+<details open><summary>The seven onboarding sections</summary><ol id="phase-list"></ol></details>
+<a class="jump" href="#review" data-screen="review">View the monthly assessment</a>
+<a class="jump" href="index.html">Try the shared onboarding ↗</a>
+<details><summary>After onboarding</summary><p>Platinum, Academy and School each have their own walkthrough before platform access.</p><a class="jump" href="?program=recovery-academy-platinum#platinum-confirmation">Preview the Platinum walkthrough</a></details>
+<details><summary>What gets submitted?</summary><ol>
+<li>Members answer 39 questions. They describe their recovery goal and where they want help in two separate answers.</li>
+<li>Age, illness duration in years and months, report details, and the two policy choices.</li>
+<li>Your answers stay in this tab. Reloading the page clears them.</li>
+</ol></details>
+<details><summary>How the answers get used</summary><ol>
+<li>Capacity ratings, symptoms and activity patterns shape the member’s assessment snapshot.</li>
+<li>Members repeat the assessment monthly to see what changes and adjust their next steps.</li>
+<li>The first answer shapes an example of a difficult day. The goal chosen near the end selects five quotes from members who shared that goal.</li>
+</ol></details>
+<details><summary>Which assessment is this?</summary><p>This demo uses the November 10 questionnaire and the updated report rules. The report shows physical, cognitive and emotional capacity and patterns.</p></details></div>
+</aside><section class="preview" aria-label="Interactive phone preview"><iframe class="frame" id="phone" title="Thriver Companion mobile screen"></iframe></section></main>
+<script>
+const phone = document.getElementById('phone');
+const screenPicker = document.getElementById('screen');
+const previous = document.getElementById('previous');
+const next = document.getElementById('next');
+const fileName = 'index.html';
+const purposeText = {"opening-logo": "The member sees the name of the app before we ask them to read or answer anything.", "opening-neuro": "You meet Neuro, the guide who will be with you as you go through the app.", "opening-study": "We show how many people may have ME/CFS. Members share how they made sense of their symptoms and found a next step.", "opening-community": "We welcome people with Long COVID, ME/CFS, and fibromyalgia. We share how many members have told their stories.", "arrival": "You can start with what feels hard today. We let you know you can take it one question at a time.", "focusChoice": "We start with the hardest part of your day. Your pick sets the first example you see.", "scope": "We explain what the report can do. You can read each policy and check its box just above the button to go on.", "terms": "We explain the rules for using the app. You can see what your guide can help with and when to ask a doctor.", "privacy": "We show what we keep, who can see it, and why. You can see how to ask for a copy or a change.", "difficulty": "We show how a symptom flare up can change plans at the last minute. The example fits the hard part you picked.", "catch-up": "We name the parts of life people can miss when they feel ill.", "fatigue-pem": "We name the symptom flare up that can follow small activities. We share what people in a large study felt.", "symptoms-intro": "Explain how answers shape a recovery profile.", "physicalSymptoms": "We ask what you feel in your body, like pain or a racing heart. Your picks go in the body section of your report.", "cognitiveSymptoms": "We ask which parts of thinking feel hard, like finding a word. Your report keeps these picks together so you can point to what gets in the way.", "emotionalSymptoms": "We give you room to name feelings, like fear or feeling numb. They go in your report so you can talk about them if you wish.", "activityLevel": "We use the six stages from the assessment. You pick the one that fits your day. It shows up in your report.", "brain-fog": "We share what 17,074 people told a UK study. Confusion or brain fog was one of the most common symptoms. This helps you see that others know that feeling.", "nervous-system": "Explain how the nervous system may contribute to symptoms.", "daily-effort": "Connect changes in daily life to the term stress threshold.", "capacity-intro": "We explain why we ask about daily tasks. Your answers show where you spend energy and where you could use help.", "physicalCapacity1": "We ask about moving from room to room for over an hour. This shows what an ordinary stretch of time at home feels like for you.", "physicalCapacity2": "We ask about standing for over half an hour. Your score can show why a long wait in line feels hard.", "physicalCapacity3": "We ask how it feels to do chores for over half an hour. Your answer shows how jobs at home fit into your day.", "physicalCapacity4": "We ask about a walk that lasts over half an hour. Your rating adds a picture of what you can do away from home.", "physicalCapacity5": "We ask how many standing showers you can take in a week. This shows how a daily task like washing fits your week.", "physicalCapacity6": "We ask about driving for over half an hour. This shows how a trip might fit into your day.", "physicalCapacity7": "We ask if you can eat most foods with ease. This adds meals to the picture of what your body can manage.", "mental-energy": "We switch from the energy you use to move to the energy you use to think. We explain how your answers about reading, calls, and screens help shape your plan.", "cognitiveCapacity1": "We ask how hard it is to use a screen for over an hour. Your score can help you explain when you need a break from a lesson.", "cognitiveCapacity2": "We ask how it feels to talk with someone for over an hour. This shows what a long visit can ask of you.", "cognitiveCapacity3": "We ask about a phone call that lasts over an hour. Your report lets you compare that with talking face to face.", "cognitiveCapacity4": "We ask if you can keep track of things you need to do. This helps show how much effort a short to-do list can take.", "cognitiveCapacity5": "We ask about reading for over half an hour. Your rating gives you a way to tell your guide how written lessons feel.", "cognitiveCapacity6": "We ask if you can put a thought into a short note. This shows how much work a written reply can take.", "cognitiveCapacity7": "We ask how well you recall things from the past two weeks. Your answer adds memory to the picture of how you think and learn.", "stress-threshold": "Explain a flare after activity and introduce PEM.", "stress-load": "We show that a flare can start a day or two after a task.", "emotional-context": "We explain why we ask about feelings next. A change in plans or a flare can bring up things the movement questions missed.", "emotionalCapacity1": "We ask if you can feel upset and still choose what to do. This shows where help with strong feelings could matter to you.", "emotionalCapacity2": "We ask if you can stay calm when symptoms build. This gives you room to say if you keep checking how you feel.", "emotionalCapacity3": "We ask how you feel when plans change. Your answer shows how hard it can be to switch gears.", "emotionalCapacity4": "We ask if guilt or a sense of hurry gets in the way of rest. Your answer can help you talk about what makes it hard to slow down.", "emotionalCapacity5": "We ask how soon you can settle after you feel on edge. This shows how long a hard moment can stay with you.", "emotionalCapacity6": "We ask if you can tell what you feel and put it into words. This shows how easy it is to let someone know what you need.", "emotionalCapacity7": "We ask how you feel when you do not know what comes next. Can you wait, or do you feel a need for an answer right away?", "delayed-symptoms": "Show how mental effort can bring on a symptom flare.", "adjustment-period": "Introduce adjustment periods and the option to rest.", "physicalPattern1": "We ask if you hold back, do what fits, or try to catch up. Later we use your pick to show a tip that fits you.", "physicalPattern2": "We ask how much you do when you feel worse. You can compare this with what you do on a better day.", "physicalPattern3": "We ask when you choose to pull back. This helps you spot the first sign you usually act on.", "physicalPattern4": "We ask what you do when symptoms flare. Your report shows when you rest and when you keep going.", "alarm-response": "Introduce brain research on pain and when to consult a clinician.", "freeze-response": "Describe what changed in a fibromyalgia therapy trial.", "cognitivePattern1": "We ask how you make up your mind. This shows if you tend to decide fast, take a pause, or think it over for a long time.", "cognitivePattern2": "We ask if your thoughts help you act or leave you stuck. Your pick shapes the tip you see later about making a choice.", "feelings-context": "We thank you for sharing how you make choices. The bar moves from 52% to 86% to show how far you’ve come. Then you can tap Continue to tell us where you want help.", "emotionalPattern1": "We ask how strong your feelings tend to be. This gives you room to show what a mild or strong feeling is like for you.", "emotionalPattern2": "We ask if you keep feelings inside or show them. This helps explain why someone watching you may miss how you feel.", "emotionalPattern3": "We ask what happens after you feel sad, scared or upset. Your answer shows whether it passes or takes up much of your day.", "emotionalPattern4": "We ask how you tend to react to a surprise. This shows if you can move on or if it changes the rest of your day.", "after-surprise": "Show completion of all three capacity sections.", "pattern-profile": "We show what you said about movement, choices, and feelings. Three more questions help us see what changes when your day gets hard.", "history": "You pick your age first. Then you pick how many years and months you have felt unwell. This helps your guide read your answers.", "profile": "We ask for a name and email to go with the report. Use made-up details when you try the demo.", "goal-intro": "Introduce the member’s goals.", "goalChoice": "We ask you to pick work, exercise, travel, or time with loved ones. Your choice sets which member story you see first.", "helpInRecovery": "Let the member know this is the last question for their profile.", "personalWin": "We ask what a win would look like for you. Your report can show a goal like “eat dinner with my kids” in your own words.", "learn": "We show five people who got back to something you want to do. Each person tells it in their own words.", "proof": "Three people tell us how they felt before. Their quotes show what helped them find a next step.", "outcomes": "Show the scale of the community and the stories members have shared.", "assembling": "We gather your answers about symptoms, daily tasks, and goals. The bar moves as each group is ready.", "sending": "We show that the form is being sent. You can leave the screen open while it checks that your answers went through.", "send-error": "We tell you when we cannot tell if the form was saved. You can try again with the same answers.", "report-loading": "Three check marks show what goes into your report. You see your stage, your patterns, and what matters to you. The report opens on its own after seven seconds.", "review": "You can see your stage and scores. Open a group to see each question, your answer, and how it counts. Next month, you can look back and see what changed.", "platinum-confirmation": "Pick a sample time to see what happens after you book a call.", "platinum-prep": "We share what Louis and Sara found helpful in their later coaching calls. You can hear their own words or watch their interviews.", "platinum-home": "We show what you and your guide will do on the call. You will talk about your goal, pick a first step and find out where to ask for help.", "platinum-calendar": "See where to find your group times. You can try a calendar file with sample calls.", "platinum-start": "See where Platinum members find lessons, ask for help, and share a win.", "adjustment-respond": "Use a flare as a cue to reassess what feels manageable.", "adjustment-research": "Describe how easier days and flares can form a pattern over time.", "stress-and-symptoms": "We show how often people in one survey felt worse after stress, even after a happy event.", "stress-support-study": "We share what people in one study noticed after they practiced ways to handle stress.", "physical-progress": "See how much of your profile you have filled in. Your movement answers stay in this tab.", "cognitive-progress": "See how much of your profile you have filled in. Your thinking answers stay in this tab.", "plan-preview": "Show how symptom, capacity, and pattern answers fit together before asking about goals.", "pain-study": "Describe a brain scan study of lingering pain in people with fibromyalgia."};
+let manifest = [];
+let selected = null;
+let mode = 'all';
+const highlightIds = new Set(['opening-logo','opening-neuro','opening-study','opening-community','arrival','focusChoice','goalChoice','scope','difficulty','catch-up','fatigue-pem','symptoms-intro','brain-fog','capacity-intro','goal-intro','physicalSymptoms',
+  'nervous-system','daily-effort','stress-threshold','delayed-symptoms','adjustment-period','alarm-response','pain-study','freeze-response','pattern-profile','cognitiveCapacity1','learn','physicalPattern1','proof','outcomes','assembling','platinum-confirmation','platinum-prep','platinum-home','report-loading','review','platinum-calendar','platinum-start','onboarding-done']);
+function nextScreen(delta) {
+  const index = manifest.findIndex(s=>s.id === selected);
+  for(let i=index+delta; i>=0 && i<manifest.length; i+=delta) {
+    if(mode === 'all' || highlightIds.has(manifest[i].id)) return manifest[i];
+  }
+}
+function syncControls(){
+  const screen=manifest.find(s=>s.id === selected);
+  if(!screen) return;
+  const purpose=purposeText[screen.id];
+  document.getElementById('screen-purpose').hidden=!purpose;
+  document.getElementById('purpose-text').textContent=purpose || '';
+  document.getElementById('beat').textContent=screen.beat ? 'Stage '+screen.beat+' of 7 · '+screen.beatLabel : (screen.id === 'arrival' || screen.id.startsWith('opening-') ? 'Welcome' : screen.id.startsWith('platinum-') ? 'Platinum walkthrough' : ['review','report-loading'].includes(screen.id) ? 'Assessment results' : 'Finish onboarding');
+  previous.disabled=!nextScreen(-1);
+  next.disabled=!nextScreen(1);
+  next.textContent=mode==='all' ? 'Next screen' : 'Next highlight';
+}
+document.querySelectorAll('input[name="mode"]').forEach(radio=>radio.addEventListener('change',()=>{
+  mode=radio.value;
+  syncControls();
+}));
+function choose(id){
+  if(!id) return;
+  if(manifest.some(screen=>screen.id===id)) {
+    history.replaceState(null,'','#'+encodeURIComponent(id));
+    phone.contentWindow.postMessage({type:'thriver-review-jump',id}, '*');
+    return;
+  }
+  const url = new URL(fileName, location.href);
+  const program = new URLSearchParams(location.search).get('program');
+  if (id.startsWith('platinum-') || (!program && location.search.includes('view=jumpstart'))) url.searchParams.set('program','recovery-academy-platinum');
+  else if (program) url.searchParams.set('program',program);
+  url.searchParams.set('screen',id);
+  url.searchParams.set('wireframes','1');
+  phone.src = url.href;
+}
+function selectStage(id) {
+  const index = manifest.findIndex(screen=>screen.id === id);
+  if(index < 0) return;
+  selected = id;
+  screenPicker.value = id;
+  syncControls();
+  if(location.hash && location.hash.slice(1) !== id) history.replaceState(null,'','#'+encodeURIComponent(id));
+}
+function adjacent(delta) {
+  const item = nextScreen(delta);
+  if(item) choose(item.id);
+}
+window.addEventListener('message',event=>{
+  if(event.source !== phone.contentWindow || event.data?.type !== 'thriver-wireframe') return;
+  if(!manifest.length && Array.isArray(event.data.screens)){
+    manifest = event.data.screens;
+    screenPicker.replaceChildren();
+    const phaseList=document.getElementById('phase-list');
+    for (const first of manifest.filter((s,i)=>s.beat && manifest[i-1]?.beat!==s.beat)) {
+      const item=document.createElement('li'), link=document.createElement('a');
+      link.href='#'+first.id;
+      link.textContent=first.beatLabel;
+      link.onclick=e=>{e.preventDefault();choose(first.id)};
+      item.append(link); phaseList.append(item);
+    }
+    let group;
+    for(const screen of manifest) {
+      if(!group || group.label !== screen.group){
+        group = document.createElement('optgroup');
+        group.label = screen.group;
+        screenPicker.append(group);
+      }
+      group.append(new Option(screen.label,screen.id));
+    }
+  }
+  selectStage(event.data.current);
+});
+screenPicker.onchange = ()=>choose(screenPicker.value);
+previous.onclick = ()=>adjacent(-1);
+next.onclick = ()=>adjacent(1);
+window.addEventListener('hashchange',()=>choose(location.hash.slice(1)));
+document.querySelectorAll('[data-screen]').forEach(link=>{
+  link.addEventListener('click',event=>{event.preventDefault();choose(link.dataset.screen)});
+});
+choose(location.hash.slice(1) || 'opening-logo');
+</script></body></html>
